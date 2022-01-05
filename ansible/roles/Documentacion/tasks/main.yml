@@ -1,0 +1,61 @@
+---
+# tasks file for Documentacion Role
+
+- include_tasks: 1_previos.yml
+  tags:
+    - inventario
+    - diskmap
+    - estado
+    - entrega
+    - hdv
+    - AIX
+    - RedHat
+    - t1
+
+- include_tasks: 2_inventario_servidores_{{ ansible_os_family }}.yml
+  tags:
+    - inventario
+    - RedHat
+    - t2
+
+- include_tasks: 3_generar_hdv_{{ ansible_os_family }}.yml
+  tags:
+    - hdv
+    - RedHat
+    - t3
+    - t3_3
+
+- include_tasks: 4_Diskmapping_{{ ansible_os_family }}.yml
+  tags:
+    - diskmap
+    - RedHat
+    - t4
+
+- include_tasks: 5_Estado_Configuracion_{{ ansible_os_family }}.yml
+  tags:
+    - estado
+    - RedHat
+    - t5
+
+- include_tasks: 6_Entrega_Recepcion_{{ ansible_os_family }}.yml
+  tags:
+    - entrega
+    - RedHat
+    - t6
+
+- include_tasks: 7_consolidacion.yml
+  tags:
+    - inventario
+    - diskmap
+    - estado
+    - entrega
+    - hdv
+    - AIX
+    - RedHat
+    - t7
+
+- include_tasks: 8_depuracion.yml
+  tags:
+    - depura
+    - t8
+...

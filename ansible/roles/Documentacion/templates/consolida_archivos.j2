@@ -1,0 +1,42 @@
+#!/bin/bash
+
+touch {{ dirout }}/Estado_final_configuracion_SO_{{ servicio }}
+touch {{ dirout }}/Inventario_Servidores_{{ servicio }}
+cat /dev/null > {{ dirout }}/Estado_final_configuracion_SO_{{ servicio }}
+cat /dev/null > {{ dirout }}/Inventario_Servidores_{{ servicio }}
+
+### Consolida Estado Final De Configuracion
+echo 'CORE,MEM(GB),Storage S.O.,Storage APP,S.O.,HOSTNAME,IP,WWPN' > {{ dirout }}/Estado_final_configuracion_SO_{{ servicio }}
+for i in `ls -l {{ dirout }}/Estado_Config_* |awk '{print $9}'`
+do
+cat $i >> /{{ dirout }}/Estado_final_configuracion_SO_{{ servicio }}
+done
+
+### Consolida Inventario De Servidores ###
+echo 'NOMBRE DE HOST,MARCA,MODELO,SERIAL,PLACA INVENTARIO ATH,FABRICANTE,NOMBRE DE SOFTWARE,VERSION,SP/TL,DATACENTER,BUNKER,RACK,CHASIS,BAHIA,UNIDADES DE RACK,TIPO DE MAQUINA,DOMINIO,IP VCENTER,NOMBRE VCENTER,CLUSTER ESX,IP ESX,DIRECCION IP DE HOST,MASCARA DE RED,PUERTA DE ENLACE,ILO,PROCESADOR,PROCESADORES FISICOS,TOTAL CORES FISICOS,TOTAL CORES VIRTUALES,MEMORIA RAM (GB),DISCOS DUROS LOCALES,CAPACIDAD DE DISCO DURO FISICO,CAPACIDAD DE ALMACENAMIENTO SAN (GB),SOFTWARE INSTALADO,FECHA DE COMPRA DD/MM/AAAA,No. Orden de Compra,INICIO DE GARANTIA DD/MM/AAAA,FIN DE GARANTIA DD/MM/AAAA,DIAS RESTANTES FIN DE GARANTIA,PROVEEDOR SOPORTE TECNICO,TIPO DE SOPORTE TECNICO,SOLICITADO POR,APROBADO POR,FECHA DE APROVISIONAMIENTO,ESTADO,FECHA DE APAGADO,FECHA DE BAJA,RESPONSABLE,DUENO DE TI,AMBIENTE,ROL,SERVICIO,ENTIDAD,OPERACION / PROYECTO,OBSERVACIONES' > {{ dirout }}/Inventario_Servidores_{{ servicio }}
+
+for i in `ls -l {{ dirout }}/Inventario_Inicial_* |grep -v Inventario_Servidores_* |awk '{print $9}'`
+do
+cat $i >> {{ dirout }}/Inventario_Servidores_{{ servicio }}
+done
+
+sleep 5
+
+### Borrado De Archivos Temporales
+#rm -f {{ dirout }}/Inventario_Inicial_*
+#rm -f {{ dirout }}/Estado_Config_*
+#rm -f {{ dirout }}/consolida_archivos.sh
+
+### Generacion De Archivos En Excel
+cd /opt/ansible/roles/Documentacion/files
+/usr/bin/perl csv2xls_doc_proy.pl , {{ dirout }}/FMTO_Entrega-Recepcion_servidores_*
+/usr/bin/perl csv2xls_doc_proy.pl , {{ dirout }}/Diskmapping_ATH_*
+/usr/bin/perl csv2xls_doc_proy.pl , {{ dirout }}/Estado_final_configuracion_SO_{{ servicio }}
+/usr/bin/perl csv2xls_doc_proy.pl , {{ dirout }}/Inventario_Servidores_{{ servicio }}
+
+### Mueve archivos a carpetas para envio
+/usr/bin/mv {{ dirout }}/Diskmapping_ATH_*.xls {{ dirzip }}/Diskmapping/
+/usr/bin/mv {{ dirout }}/Estado_final_configuracion_SO_{{ servicio }}.xls {{ dirzip }}/Estado-Final-Configuracion/
+/usr/bin/mv {{ dirout }}/Inventario_Servidores_{{ servicio }}.xls {{ dirzip }}/Estado-Final-Configuracion/
+/usr/bin/mv {{ dirout }}/FMTO_Entrega-Recepcion_servidores_*.xls {{ dirzip }}/Entrega-Recepcion/
+/usr/bin/mv {{ dirout }}/*.html {{ dirzip }}/HDV/

@@ -1,0 +1,232 @@
+#!/bin/ksh
+
+###############################################
+### Levantamiento de Diskmapping Servidores ###
+###############################################
+
+echo 'Iniciando Levantamiento de Diskmapping del Servidor {{ ansible_hostname }}'
+echo ''
+echo ''
+
+### Convierte a Mayusculas el Hostname """
+host1=`echo {{ ansible_hostname }} | tr '[:lower:]' '[:upper:]'`
+
+touch {{ dirwrk }}/Diskmapping_ATH_{{ ansible_hostname }}
+cat /dev/null > {{ dirwrk }}/Diskmapping_ATH_{{ ansible_hostname }}
+
+echo '' > {{ dirwrk }}/Diskmapping_ATH_{{ ansible_hostname }}
+echo 'DISKMAPPING DEL SERVIDOR ' $host1 'PARA ENTREGA A PRODUCCION' >> {{ dirwrk }}/Diskmapping_ATH_{{ ansible_hostname }}
+echo '' >> {{ dirwrk }}/Diskmapping_ATH_{{ ansible_hostname }}
+echo '' >> {{ dirwrk }}/Diskmapping_ATH_{{ ansible_hostname }}
+
+### Saca Informacion De Discos SO ###
+
+cat /dev/null > {{ dirwrk }}/vgs.txt
+lspv |grep active |sed "s/,//g"|awk '{print $1 ":" $3}' >> {{ dirwrk }}/vgs.txt
+
+echo 'OPERATING SYSTEM DISKS INFORMATION' >> {{ dirwrk }}/Diskmapping_ATH_{{ ansible_hostname }}
+echo 'DISK WWPN','DEVICE','VG NAME','MAJOR','MINOR','SIZE MB','OWNER','GROUP','PERMISSIONS' >> {{ dirwrk }}/Diskmapping_ATH_{{ ansible_hostname }}
+
+### Saca Informacion Discos S.O. ###
+
+for i in `lspv |grep rootvg |awk '{print $1}'`
+        do
+                wwno=`lscfg -vpl $i |grep Z0 |sed "s/\./ /g" |awk '{print $4}'`
+		wwnso=`echo 'C'$wwno`
+                devso=`echo $i`
+                size=`bootinfo -s $i`
+                major=`ls -l /dev/$i |sed "s/\/dev\// /g"|sed "s/,//g"|awk '{print $5}'`
+                minor=`ls -l /dev/$i |sed "s/\/dev\// /g"|sed "s/,//g"|awk '{print $6}'`
+                for j in `cat {{ dirwrk }}/vgs.txt | cut -f1 -d:`
+                        do
+                        if [ "$i" = "$j" ]
+                                then
+                                vgname=`cat {{ dirwrk }}/vgs.txt |grep -iw $j | cut -f2 -d:`
+                        fi
+                        done
+                perm=`ls -ld /dev/$i | awk '{k=0;for(i=0;i<=8;i++)k+=((substr($1,i+2,1)~/[rwx]/)*2^(8-i));if(k)printf("%0o ",k);print}' |awk '{print $1}'`
+                owner=`ls -ld /dev/$i |awk '{print $3}'`
+                grp=`ls -ld /dev/$i |awk '{print $4}'`
+                echo $wwnso,$devso,$vgname,$major,$minor,$size,$owner,$grp,$perm,'' >> {{ dirwrk }}/Diskmapping_ATH_{{ ansible_hostname }}
+        done
+for i in `lspv |grep swap |awk '{print $1}'`
+        do
+                wwns=`lscfg -vpl $i |grep Z0 |sed "s/\./ /g" |awk '{print $4}'`
+		wwnsw=`echo 'C'$wwns`
+                devsw=`echo $i`
+                size=`bootinfo -s $i`
+                major=`ls -l /dev/$i |sed "s/\/dev\// /g"|sed "s/,//g"|awk '{print $5}'`
+                minor=`ls -l /dev/$i |sed "s/\/dev\// /g"|sed "s/,//g"|awk '{print $6}'`
+                for j in `cat {{ dirwrk }}/vgs.txt | cut -f1 -d:`
+                        do
+                        if [ "$i" = "$j" ]
+                                then
+                                vgname=`cat {{ dirwrk }}/vgs.txt |grep -iw $j | cut -f2 -d:`
+                        fi
+                        done
+                perm=`ls -ld /dev/$i | awk '{k=0;for(i=0;i<=8;i++)k+=((substr($1,i+2,1)~/[rwx]/)*2^(8-i));if(k)printf("%0o ",k);print}' |awk '{print $1}'`
+                owner=`ls -ld /dev/$i |awk '{print $3}'`
+                grp=`ls -ld /dev/$i |awk '{print $4}'`
+                echo $wwnsw,$devsw,$vgname,$major,$minor,$size,$owner,$grp,$perm,'' >> {{ dirwrk }}/Diskmapping_ATH_{{ ansible_hostname }}
+        done
+echo '' >> {{ dirwrk }}/Diskmapping_ATH_{{ ansible_hostname }}
+echo '' >> {{ dirwrk }}/Diskmapping_ATH_{{ ansible_hostname }}
+
+### Saca Informacion Discos APP ###
+
+echo 'VOLUME GROUPS APP/DB DISK INFORMATION' >> {{ dirwrk }}/Diskmapping_ATH_{{ ansible_hostname }}
+echo 'DISK WWPN','DEVICE','VG NAME','MAJOR','MINOR','SIZE MB','OWNER','GROUP','PERMISSIONS' >> {{ dirwrk }}/Diskmapping_ATH_{{ ansible_hostname }}
+
+for i in `lspv | grep -v rootvg |grep -v swap |grep -v none |awk '{print $1}'`
+        do
+                wwna=`lscfg -vpl $i |grep Z0 |sed "s/\./ /g" |awk '{print $4}'`
+		wwn=`echo 'C'$wwna`
+                dev=`echo $i`
+                size=`bootinfo -s $i`
+                major=`ls -l /dev/$i |sed "s/\/dev\// /g"|sed "s/,//g"|awk '{print $5}'`
+                minor=`ls -l /dev/$i |sed "s/\/dev\// /g"|sed "s/,//g"|awk '{print $6}'`
+                for j in `cat {{ dirwrk }}/vgs.txt | cut -f1 -d:`
+                        do
+                        if [ "$i" = "$j" ]
+                                then
+                                vgname=`cat {{ dirwrk }}/vgs.txt |grep -iw $j | cut -f2 -d:`
+                        fi
+                        done
+                perm=`ls -ld /dev/$i | awk '{k=0;for(i=0;i<=8;i++)k+=((substr($1,i+2,1)~/[rwx]/)*2^(8-i));if(k)printf("%0o ",k);print}' |awk '{print $1}'`
+                owner=`ls -ld /dev/$i |awk '{print $3}'`
+                grp=`ls -ld /dev/$i |awk '{print $4}'`
+                echo $wwn,$dev,$vgname,$major,$minor,$size,$owner,$grp,$perm,'' >> {{ dirwrk }}/Diskmapping_ATH_{{ ansible_hostname }}
+        done
+
+echo '' >> {{ dirwrk }}/Diskmapping_ATH_{{ ansible_hostname }}
+echo '' >> {{ dirwrk }}/Diskmapping_ATH_{{ ansible_hostname }}
+
+### Saca Informacion Filesystems ###
+
+echo 'FILESYSTEMS INFORMATION' >> {{ dirwrk }}/Diskmapping_ATH_{{ ansible_hostname }}
+echo 'DISK WWPN','DISK','PARTITION','SIZE MB','VOLUME GROUP','LOGICAL VOLUME','FILESYSTEM','MOUNT POINT' >> {{ dirwrk }}/Diskmapping_ATH_{{ ansible_hostname }}
+
+
+cat /dev/null > {{ dirwrk }}/lvs.txt
+cat /dev/null > {{ dirwrk }}/hba.txt
+
+### Guarda Lista De lvs Activos ###
+for i in `lsvg -o |sort`
+        do
+                lsvg -l $i |grep -v : |grep -v NAME |grep -v N/A >> {{ dirwrk }}/lvs.txt
+        done
+#cat $dirw/lvs.txt
+
+### Genera Listado HBAs Servidor
+lsdev |grep fcs |awk '{print $1}' >> {{ dirwrk }}/hba.txt
+cat `find {{ dirwrk }}/hba.txt` | tr '\n' ' ' > {{ dirwrk }}/hba_new.txt
+hbas=`cat {{ dirwrk }}/hba_new.txt`
+#echo $hbas
+
+# Valida si existe un GPFS para reportar FS
+gpfs=`/usr/lpp/mmfs/bin/mmgetstate |grep active |awk '{print $3}' 2> /dev/null`
+
+### Saca Informacion de Los Filesystems y genera Archivo ###
+
+for j in `cat {{ dirwrk }}/lvs.txt |awk '{print $1}'`
+        do
+                vg=`lslv $j |grep VOLUME |awk '{print $6}'`
+                disk=`lsvg -p $vg |grep -v : |grep -v NAME |awk '{print $1}'`
+                wwpn=`lscfg -vpl $disk |grep Z0 |sed "s/\./ /g" |awk '{print $4}'`
+		wwpnd=`echo 'C'$wwpn`
+                fstype=`lslv $j |grep TYPE |awk '{print $2}'`
+                pmont=`lslv $j |grep LABEL |awk '{print $5}'`
+                ppn=`lslv $j |grep PPs |grep -v STALE |awk '{print $4}'`
+                ppz=`lsvg $vg |grep STATE |awk '{print $6}'`
+                #psize=`expr $ppn \* $ppz`
+		psize=`echo $(($ppn * $ppz))`
+                echo $wwpnd,$disk,$j,$psize,$vg,$j,$fstype,$pmont >> {{ dirwrk }}/Diskmapping_ATH_{{ ansible_hostname }}
+        done
+if [ "$gpfs" != "" ]
+        then
+		mmlsnsd -m |grep -v node |grep -v NSD |awk '{print $1" "$3}' | sed "s/dev//g" |sed "s/\///g" > {{ dirwrk }}/gpfs.txt
+		mmlsnsd |grep -v free |awk '{print $1}' |grep -v File |sed 's/-//g' > {{ dirwrk }}/gfs_dev.txt
+		for i in `cat {{ dirwrk }}/gpfs_dev.txt |awk '{print $1}'`
+		do
+			vg=`cat {{ dirwrk }}/gpfs_dev.txt |grep -iw $i |awk '{print $2}'`
+			disk=`cat {{ dirwrk }}/gpfs.txt |grep -iw $vg |awk '{print $2}'`
+			wwpng=`lscfg -vpl $disk |grep Z0 |sed "s/\./ /g" |awk '{print $4}'`
+			wwpnd=`echo 'C'$wwpng`
+			pmont=`df -g |grep -iw $i |awk '{print $7}'`
+			ppn=`df -g |grep -iw $i |awk '{print $2}'`
+			sgb=${ppn%.*}
+			psize=`echo $(($sgb * 1024))`
+			echo $wwpnd,$disk,$i,$psize,$vg,NA,gpfs,$pmont >> {{ dirwrk }}/Diskmapping_ATH_{{ ansible_hostname }}
+		done
+fi
+echo '' >> {{ dirwrk }}/Diskmapping_ATH_{{ ansible_hostname }}
+echo '' >> {{ dirwrk }}/Diskmapping_ATH_{{ ansible_hostname }}
+
+
+### Toma De Informacion Discos GPFS
+
+gpfs=`/usr/lpp/mmfs/bin/mmgetstate |grep active |awk '{print $3}' 2> /dev/null`
+
+if [ "$gpfs" != "" ]
+        then
+                echo 'GPFS DISKS INFORMATION' >> {{ dirwrk }}/Diskmapping_ATH_{{ ansible_hostname }}
+                echo 'DISK WWPN','DEVICE','GPFS DEVICE','MAJOR','MINOR','SIZE MB','OWNER','GROUP','PERMISSIONS','USE' >> {{ dirwrk }}/Diskmapping_ATH_{{ ansible_hostname }}
+
+                for i in `cat {{ dirwrk }}/gpfs.txt`
+                        do
+                                wwngf=`lscfg -vpl $i |grep Z0 |sed "s/\./ /g" |awk '{print $4}'`
+				wwn=`echo 'C'$wwngf`
+                                dev=`echo $i`
+                                size=`bootinfo -s $i`
+                                major=`ls -l /dev/$i |sed "s/\/dev\// /g"|sed "s/,//g"|awk '{print $5}'`
+                                minor=`ls -l /dev/$i |sed "s/\/dev\// /g"|sed "s/,//g"|awk '{print $6}'`
+                                perm=`ls -ld /dev/$i | awk '{k=0;for(i=0;i<=8;i++)k+=((substr($1,i+2,1)~/[rwx]/)*2^(8-i));if(k)printf("%0o ",k);print}' |awk '{print $1}'`
+                                owner=`ls -ld /dev/$i |awk '{print $3}'`
+                                grp=`ls -ld /dev/$i |awk '{print $4}'`
+                                gpfsd=`mmlsnsd -m |grep -v node |grep -v NSD |grep -iw $i |awk '{print $1}'`
+                echo $wwn,$dev,$gpfsd,$major,$minor,$size,$owner,$grp,$perm,'GPFS' >> {{ dirwrk }}/Diskmapping_ATH_{{ ansible_hostname }}
+                done
+fi
+
+### Saca Informacion Discos ASM ###
+
+pmon=`ps -fea |grep pmon |grep -i asm |awk '{print $9}'`
+
+if [ "$pmon" != "" ]
+        then
+        touch {{ dirwrk }}/asm.txt
+        cat /dev/null > {{ dirwrk }}/asm.txt
+        ls -le /dev |grep grid |grep -v lv |grep -v vg |grep -v oracle |sed "s/,//g"|awk '{print $6 ":" $10}' >> {{ dirwrk }}/asm.txt
+        echo 'ASM DISKS INFORMATION' >> {{ dirwrk }}/Diskmapping_ATH_{{ ansible_hostname }}
+        echo 'DISK WWPN','DEVICE','LABEL/PATH','MAJOR','MINOR','SIZE MB','OWNER','GROUP','PERMISSIONS','USE' >> {{ dirwrk }}/Diskmapping_ATH_{{ ansible_hostname }}
+        for i in `lspv |grep none |awk '{print $1}'`
+                do
+                        wwno=`lscfg -vpl $i |grep Z0 |sed "s/\./ /g" |awk '{print $4}'`
+			wwnasm=`echo 'C'$wwno`
+                        dev=`echo $i`
+                        size=`bootinfo -s $i`
+                        major=`ls -l /dev/$i |sed "s/\/dev\// /g"|sed "s/,//g"|awk '{print $5}'`
+                        minor=`ls -l /dev/$i |sed "s/\/dev\// /g"|sed "s/,//g"|awk '{print $6}'`
+                        for j in `cat {{ dirwrk }}/asm.txt | cut -f1 -d:`
+                                do
+                                if [ "$minor" = "$j" ]
+                                        then
+                                        asm=`cat {{ dirwrk }}/asm.txt |grep -iw $j | cut -f2 -d:`
+                                fi
+                                done
+                        perm=`ls -ld /dev/$asm | awk '{k=0;for(i=0;i<=8;i++)k+=((substr($1,i+2,1)~/[rwx]/)*2^(8-i));if(k)printf("%0o ",k);print}' |awk '{print $1}'`
+                        owner=`ls -ld /dev/$asm |awk '{print $3}'`
+                        grp=`ls -ld /dev/$asm |awk '{print $4}'`
+                        if [ "$asm" != "" ]
+                                then
+                                        echo $wwnasm,$dev,$asm,$major,$minor,$size,$owner,$grp,$perm,'ASM' >> {{ dirwrk }}/Diskmapping_ATH_{{ ansible_hostname }}
+                        fi
+                done
+fi
+echo '' >> {{ dirwrk }}/Diskmapping_ATH_{{ ansible_hostname }}
+echo '' >> {{ dirwrk }}/Diskmapping_ATH_{{ ansible_hostname }}
+
+sleep 2
+
+rm -f /{{ ansible_hostname }}*.txt
+rm -f {{ dirwrk }}/*.txt

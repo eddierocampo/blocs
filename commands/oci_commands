@@ -1,0 +1,14 @@
+#### Configuración  inicial
+oci setup config
+
+##### VARIABLES #####
+tenancy=ocid1.compartment.oc1..aaaaaaaar3f4muk5hrujwxclgxlnmxlitkhi4krbe2etdiqmwusizy346auq
+ad="lTkl:US-ASHBURN-AD-1"
+
+### Sintaxis  ###
+oci <service> <type> <action> <options>
+##### Ejemplos #####
+oci compute instance list --compartment-id $tenancy
+oci bv boot-volume list --compartment-id $tenancy --availability-domain $ad
+
+oci bv boot-volume list --compartment-id $tenancy --availability-domain $ad --output table --query "data [*].{ImageName:\"display-name\", OCID:id}"

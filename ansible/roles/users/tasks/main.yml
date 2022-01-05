@@ -1,0 +1,8 @@
+---
+# tasks file for users
+
+- name: groups
+
+- name: users
+
+- name: sudo

@@ -1,0 +1,14 @@
+---
+### Habilitar las lineas comentadas en caso de ejecutarse con SUDO
+### Se debe remplazar root por el usuario con el cual se ejecutará
+
+- hosts: all
+  remote_user: root
+  #become: true
+  #become_flags: "-H -S"
+  become_flags: "-H -S"
+  vars_files:
+    - doc_proy.yml
+  roles:
+    - /opt/ansible/roles/Documentacion
+...

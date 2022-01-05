@@ -1,0 +1,13 @@
+---
+# Archivo de variables para ejecucion de  Role 
+# de generacion de documentacion de servidores
+
+# Nombre del servicio al que pertenecen las maquinas a documentar
+servicio: 'FIDELIZACION'
+
+# Nombre del Consultor que genera la Documentacion
+user_doc: 'Oscar Mauricio Franco'
+
+# Ruta para guardar archivos
+dirwrk: '/tmp/doc_{{ ansible_hostname }}'
+

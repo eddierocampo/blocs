@@ -1,0 +1,196 @@
+# yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+# yum install ansible
+
+
+[root@ip-10-184-5-65 yum.repos.d]# yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+Loaded plugins: amazon-id, product-id, search-disabled-repos, subscription-manager
+
+This system is not registered with an entitlement server. You can use subscription-manager to register.
+
+epel-release-latest-7.noarch.rpm                                                                                              |  15 kB  00:00:00
+Examining /var/tmp/yum-root-dPuDhR/epel-release-latest-7.noarch.rpm: epel-release-7-12.noarch
+Marking /var/tmp/yum-root-dPuDhR/epel-release-latest-7.noarch.rpm to be installed
+Resolving Dependencies
+--> Running transaction check
+---> Package epel-release.noarch 0:7-12 will be installed
+--> Finished Dependency Resolution
+
+Dependencies Resolved
+
+=====================================================================================================================================================
+ Package                           Arch                        Version                      Repository                                          Size
+=====================================================================================================================================================
+Installing:
+ epel-release                      noarch                      7-12                         /epel-release-latest-7.noarch                       24 k
+
+Transaction Summary
+=====================================================================================================================================================
+Install  1 Package
+
+Total size: 24 k
+Installed size: 24 k
+Downloading packages:
+Running transaction check
+Running transaction test
+Transaction test succeeded
+Running transaction
+Warning: RPMDB altered outside of yum.
+  Installing : epel-release-7-12.noarch                                                                                                          1/1
+  Verifying  : epel-release-7-12.noarch                                                                                                          1/1
+rhel-7-server-rhui-rpms/7Server/x86_64/productid                                                                              | 2.1 kB  00:00:00
+
+Installed:
+  epel-release.noarch 0:7-12
+
+Complete!
+[root@ip-10-184-5-65 yum.repos.d]# yum install ansible
+Loaded plugins: amazon-id, product-id, search-disabled-repos, subscription-manager
+
+This system is not registered with an entitlement server. You can use subscription-manager to register.
+
+epel/x86_64/metalink                                                                                                          |  19 kB  00:00:00
+Resolving Dependencies
+--> Running transaction check
+---> Package ansible.noarch 0:2.9.10-1.el7 will be installed
+--> Finished Dependency Resolution
+
+Dependencies Resolved
+
+=====================================================================================================================================================
+ Package                            Arch                              Version                                  Repository                       Size
+=====================================================================================================================================================
+Installing:
+ ansible                            noarch                            2.9.10-1.el7                             epel                             17 M
+
+Transaction Summary
+=====================================================================================================================================================
+Install  1 Package
+
+Total download size: 17 M
+Installed size: 105 M
+Is this ok [y/d/N]: y
+Downloading packages:
+ansible-2.9.10-1.el7.noarch.rpm                                                                                               |  17 MB  00:00:00
+Running transaction check
+Running transaction test
+Transaction test succeeded
+Running transaction
+  Installing : ansible-2.9.10-1.el7.noarch                                                                                                       1/1
+  Verifying  : ansible-2.9.10-1.el7.noarch                                                                                                       1/1
+
+Installed:
+  ansible.noarch 0:2.9.10-1.el7
+
+Complete!
+[root@ip-10-184-5-65 yum.repos.d]#
+[root@ip-10-184-5-65 yum.repos.d]# yum repolist
+Loaded plugins: amazon-id, product-id, search-disabled-repos, subscription-manager
+
+This system is not registered with an entitlement server. You can use subscription-manager to register.
+
+repo id                                               repo name                                                                                status
+epel/x86_64                                           Extra Packages for Enterprise Linux 7 - x86_64                                           13,425
+rhel-7-server-rhui-rh-common-rpms/7Server/x86_64      Red Hat Enterprise Linux 7 Server - RH Common from RHUI (RPMs)                              243
+rhel-7-server-rhui-rpms/7Server/x86_64                Red Hat Enterprise Linux 7 Server from RHUI (RPMs)                                       29,414
+rhui-client-config-server-7/x86_64                    Custom Repositories - Red Hat Update Infrastructure 3 Client Configuration Server 7          10
+repolist: 43,092
+[root@ip-10-184-5-65 yum.repos.d]#
+
+######pasarela.prd.pci
+10.184.10.112	WUE1ATPSPPRDAP3
+10.184.10.122	WUE1ATPSPPRDAP5
+10.184.10.124	WUE1ATPSPPRDBS3
+10.184.10.151	WUE1ATPSPPRDAP4
+10.184.10.183	WUE1ATPSPPRDAP2
+10.184.10.189	WUE1ATPSPPRDAP6
+10.184.10.84	WUE1ATPSPPRDAP1
+
+######pasarela.qa.pci
+10.184.34.124	WUE1ATPSPQAAP5
+10.184.34.143	WUE1ATPSPQAAP2
+10.184.34.159	WUE1ATPSPQAAP4
+10.184.34.169	WUE1ATPSPQAAP6
+10.184.34.75	WUE1ATPSPQAAP1
+10.184.34.84	WUE1ATPSPQAAP3
+
+######pasarela.dr.pci
+10.184.20.154	WUE2ATPSPPRDAP4
+10.184.20.85	WUE2ATPSPPRDBS3
+10.184.20.121	WUE2ATPSPPRDAP5
+10.184.20.119	WUE2ATPSPPRDAP3
+10.184.20.108	WUE2ATPSPPRDAP1
+10.184.20.172	WUE2ATPSPPRDAP6
+10.184.20.132	WUE2ATPSPPRDAP2
+
+######pasarela.stg.pci
+10.184.12.90	WUE1ATPSPSTGBS2
+10.184.12.100	WUE1ATPSPSTGAP2
+10.184.12.121	WUE1ATPSPSTGAP3
+10.184.12.88	WUE1ATPSPSTGAP1
+
+######pasarela-pt.pci
+10.184.32.124	WUE1ATPSPDEVBS2
+10.184.32.74	WUE1ATPSPDEVAP2
+10.184.32.122	WUE1ATPSPDEVAP1
+10.184.32.70	WUE1ATPSPDEVAP3
+
+
+#### pasarela.prd.pci RHEL 7.7
+[prdrhel]
+WUE1ATPSPPRDAP3
+WUE1ATPSPPRDAP4
+WUE1ATPSPPRDAP2
+WUE1ATPSPPRDAP1
+
+#### pasarela.prd.pci Amazon Linux 2
+[prdal]
+WUE1ATPSPPRDAP5
+WUE1ATPSPPRDBS3
+WUE1ATPSPPRDAP6
+
+#### pasarela.qa.pci RHEL 7.7
+[qarhel]
+WUE1ATPSPQAAP2
+WUE1ATPSPQAAP4
+WUE1ATPSPQAAP1
+WUE1ATPSPQAAP3
+
+#### pasarela.qa.pci Amazon Linux 2
+[qaal]
+WUE1ATPSPQAAP5
+WUE1ATPSPQAAP6
+
+#### pasarela.dr.pci RHEL 7.7
+[drrhel]
+WUE2ATPSPPRDAP4
+WUE2ATPSPPRDAP3
+WUE2ATPSPPRDAP1
+WUE2ATPSPPRDAP2
+
+#### pasarela.dr.pci Amazon Linux
+[dral]
+WUE2ATPSPPRDBS3
+WUE2ATPSPPRDAP5
+WUE2ATPSPPRDAP6
+
+#### pasarela.stg.pci RHEL 7.7
+[stgrhel]
+WUE1ATPSPSTGAP2
+WUE1ATPSPSTGAP1
+
+#### pasarela.stg.pci Amazon Linux
+[stgal]
+WUE1ATPSPSTGBS2
+WUE1ATPSPSTGAP3
+
+#### pasarela-pt.pci RHEL 7.7
+[ptrhel]
+WUE1ATPSPDEVAP2
+WUE1ATPSPDEVAP1
+
+#### pasarela-pt.pci Amazon Linux
+[ptal]
+WUE1ATPSPDEVBS2
+WUE1ATPSPDEVAP3
+
+10.184.5.65

@@ -1,0 +1,9 @@
+---
+# handlers file for seti.ora_12c_7
+- name: Firewalld reload
+  command: firewall-cmd --reload
+  register: result
+
+- name: Update Grub
+  command: grub2-mkconfig -o /boot/grub2/grub.cfg
+  register: result

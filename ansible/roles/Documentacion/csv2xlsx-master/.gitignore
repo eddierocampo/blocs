@@ -1,0 +1,7 @@
+*.csv
+*.xlsx
+.idea/**
+.idea
+crosscompile.sh
+csv2xlsx
+.vscode/**

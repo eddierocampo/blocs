@@ -1,0 +1,118 @@
+pipeline{
+  agent any
+  stages{
+    stage("Validaciones iniciales"){
+    	agent any 
+          steps{
+            echo "Validando Git"    
+        sh "nc -vz 192.168.26.64 8080"
+        echo "Validando Registry"    
+        sh "nc -vz 10.0.0.42 5000"
+        echo "Validando K8s"    
+        sh "nc -vz 10.0.0.42 22"
+      echo "Validando Docker"    
+        sh "nc -vz 10.0.0.41 22"
+          }
+    }
+      stage("Fuentes"){
+      	   agent { 
+                label 'slave_ZF'
+            }
+          steps{
+            checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'Git_ZF', url: 'http://192.168.26.64:8080/gitbucket/git/ZonaFranca/${NombreRepo}.git']]])
+          }
+    }
+    stage("Versiones"){
+       	   agent { 
+                label 'slave_ZF'
+            }
+      steps{
+        script{
+             Version =sh ( script: '''lat=$(curl -s -H "Accept: application/json" --user admin:R3g1stry2019* http://10.0.0.42:5000/v2/${NombreRepo}/tags/list | jq -r '.tags[]' | sort -n | tail -1) ; echo "$lat + 0.1" | bc''', returnStdout: true)
+             Version.trim()
+             verMejo = Version.trim()
+             namespace = sh (script: "jq -r '.ambiente' properties.json",returnStdout: true)
+             folder = sh (script: "jq -r '.carpetayaml' properties.json",returnStdout: true)
+             nsMejo = namespace.trim()
+             folMejo = folder.trim()
+             if(verMejo==""){
+                 verMejo="1.0"
+             }
+             echo "${verMejo}"
+             echo "${nsMejo}"
+             echo "${folMejo}"
+           }
+        }
+    }
+  stage("Confirmacion Compilacion") {
+  		agent any 
+        steps{
+        sh "curl -s -X POST https://api.telegram.org/bot935796874:AAGgb7yjSb020PW7mk9ocw2KicbNXioYy-E/sendMessage -d chat_id=-395741149 -d text=\"La Integracion ${NombreRepo} ejecución ${env.BUILD_NUMBER} en Ambiente ${nsMejo}, Se esta Compilando.... Paciencia...\""
+      }
+    }
+    stage("Compilar"){
+       	   agent { 
+                label 'slave_ZF'
+            }
+            steps{
+            echo "${Version}"
+            sh "/opt/apache-maven-3.6.3/bin/mvn compile -DsendCredentialsOverHttp=true -Drelease.nombreImagen=${NombreRepo} -Drelease.version=${verMejo} jib:dockerBuild"
+          }
+        }
+    stage("Crear y Subir Imagen"){
+      	   agent { 
+                label 'slave_ZF'
+            }
+            steps{
+            echo "${Version}"
+            sh "/opt/apache-maven-3.6.3/bin/mvn -X compile -Drelease.nombreImagen=${NombreRepo} -Drelease.version=${verMejo} -DsendCredentialsOverHttp=true jib:build"
+          }
+        }
+    stage("Elminando Artefactos"){
+       	   agent { 
+                label 'slave_ZF'
+            }
+          steps{
+            script{
+            try {
+              echo "${verMejo}"
+              echo "${nsMejo}"
+              echo "${folMejo}"
+              sh """cd YML/${folMejo};kubectl delete svc ${NombreRepo} -n ${nsMejo}"""
+              sh """cd YML/${folMejo};kubectl delete deployment ${NombreRepo} -n ${nsMejo}"""
+              } catch (err) {
+                echo err.getMessage()
+                }
+              }
+          }
+        }
+    stage("Agregar Version YAML"){
+      	   agent { 
+                label 'slave_ZF'
+            }
+          steps{
+            echo "${verMejo}"
+             echo "${nsMejo}"
+             echo "${folMejo}"
+            sh"""cd YML/${folMejo}; sed -i "s/{version}/${verMejo}/g" ${NombreRepo}-deployment.yaml; cat ${NombreRepo}-deployment.yaml"""
+            }   
+        }
+      stage("Creando artefactos"){
+      	      agent { 
+                label 'slave_ZF'
+            }
+          steps{
+            script{
+              try {
+                echo "${verMejo}"
+                echo "${nsMejo}"
+                echo "${folMejo}"
+                sh """cd YML/${folMejo};kubectl apply -f ${NombreRepo}-deployment.yaml -n ${nsMejo}"""
+                sh """cd YML/${folMejo};kubectl apply -f ${NombreRepo}-service.yaml -n ${nsMejo}"""
+           } catch (err) {
+                echo err.getMessage()
+           }
+         }
+          }
+        }
+  }

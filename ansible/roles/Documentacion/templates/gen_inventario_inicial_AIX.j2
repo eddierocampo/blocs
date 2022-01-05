@@ -1,0 +1,67 @@
+#!/bin/ksh
+
+### Service Pack S.O. ###
+versp=`oslevel -s`
+
+### Calcula Memoria en GB
+memg=`expr {{ ansible_memtotal_mb }} / 1024`
+
+### Numero de Discos Asignados ###
+numdsk=`lspv |wc -l`
+
+### Tamaño Total Discos Asignados ###
+alldsk=0
+
+for i in `lsdev -Cc disk |grep hdisk |awk '{print $1}'`
+    do
+      dsk=`bootinfo -s $i`
+      alldsk=`expr $alldsk + $dsk`
+    done
+
+dskapg=`expr $alldsk / 1024`
+
+### Cantidad Interfaces De Red ###
+numnet=`lsdev -Cc adapter |grep Ethernet |wc -l`
+
+### Saca Default Gateway ###
+gateway=`netstat -nr |grep default |awk '{print $2}'`
+
+### Saca Mac Address Tarjeta Principal ###
+rm -f $dirw/macaddr.txt
+rm -f $dirw/macaddr_new.txt
+
+for i in `lsdev |grep ent |grep Ethernet |awk '{print $1}'`
+    do
+      mac=`lscfg -vpl $i |grep Address |sed "s/\./ /g" |awk '{print $3}'`
+      echo $mac >> $dirw/macaddr.txt 2>&1
+    done
+
+cat `find $dirw/macaddr.txt` | tr '\n' ' ' >> $dirw/macaddr_new.txt
+macadd=`cat $dirw/macaddr_new.txt`
+
+### Saca Edicion Sistema Operativo (Standard/Express/Enterprise) ###
+edition=`chedition -l`
+
+### Saca Serial de la maquina
+serie=`prtconf |grep -i "serial number" |awk '{print $4}'`
+
+### Define el site del server
+amb={{ ambiente }}
+if [ "$amb" == "PT" ] || [ "$amb" == "QA" ] || [ "$amb" == "Contingencia" ]
+then
+        site='Zona Franca'
+else
+        site='Triara'
+fi
+
+### Saca dominio configurado
+dom=`cat /etc/resolv.conf |grep domain |awk '{rpint $2}' 2> /dev/null`
+if [ $dom = '' ];
+        then
+                domain=`echo 'NA'`
+        else
+                domain=$dom
+        fi
+
+### Generacion Archivo CSV Inventario ###
+echo {{ ansible_hostname }},'IBM',{{ ansible_devices.sys0.attributes.modelname|regex_replace ('IBM,') }},$serie,'','IBM',{{ ansible_system }},{{ ansible_distribution_major_version }},$versp,$site,'','','','','','Virtual',$domain,'','','','',{{ ansible_default_ipv4.address }},{{ ansible_default_ipv4.netmask }},{{ ansible_default_ipv4.gateway }},'',{{ ansible_processor }},'NA',{{ ansible_processor_count }},{{ ansible_processor_cores }},$memg,$numdsk,'NA',$dskapg,'','','','','','','IBM','7x24x365','','','','Activo','','','','',{{ ambiente }},'',{{ servicio }},'',{{ servicio }},'' > {{ dirwrk }}/Inventario_Inicial_{{ ansible_hostname }}

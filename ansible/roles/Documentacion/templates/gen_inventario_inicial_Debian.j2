@@ -1,0 +1,59 @@
+#!/bin/bash
+
+#################################################################
+### Recoleccion Informacion Para Inventario ServidoresLinux   ###
+#################################################################
+
+### Velocidad Iface ###
+inter_speed=`ethtool {{ ansible_default_ipv4.interface}} |grep -iw Speed |awk '{print $2}'`
+
+### Tipo Procesador ###
+proct=`lscpu |grep "Model name" |awk '{print $3, $4, $5}' |sed "s/(R)//g" |sed "s/(TM)//g"`
+
+### Calcula Memoria en GB
+memg=`free -g |grep Mem |awk '{print $2}'`
+
+### Numero de Discos Asignados ###
+numdsk=`lsblk -b | grep disk | egrep -v 'fd0|lvm|ram' |wc -l`
+
+### Tamaño Total Discos Asignados ###
+dskapg=`lsblk -b | grep disk | egrep -v 'fd0|lvm|ram' | awk 'BEGIN {suma=0} {suma+=$4} END {print suma/1024/1024/1024, "GB"}'`
+
+### Cantidad Interfaces De Red ###
+numnet=`ip link show |grep en |grep -v lo |awk '{print $2}' |sed s/://g |wc -l`
+
+### Tipo Maquina ###
+mant=`virt-what`
+
+if [ "$mant" = '' ];
+        then
+                machtype='Fisica'
+        else
+                machtype='Virtual'
+fi
+
+### Define el site del server
+amb={{ ambiente }}
+if [ "$amb" == "PT" ] || [ "$amb" == "QA" ] || [ "$amb" == "Contingencia" ]
+then
+        site='Zona Franca'
+else
+        site='Triara'
+fi
+
+### Saca dominio configurado
+dom=`cat /etc/resolv.conf |grep domain |awk '{rpint $2}' 2> /dev/null`
+if [ $dom = '' ];
+        then
+                domain=`echo 'NA'`
+        else
+                domain=$dom
+        fi
+
+### Marca Procesador
+proc=`lscpu |grep "Model name" |sed 's/Model name:            //g'`
+
+### Generacion Archivo CSV Inventario ###
+echo "Generando Archivo CSV en la ruta {{ dirwrk }}"
+
+echo {{ ansible_hostname }},{{ ansible_system_vendor | regex_replace(',') }},{{ ansible_product_name }},{{ ansible_machine_id }},'',{{ ansible_system_vendor | regex_replace(',') }},{{ ansible_system }},{{ ansible_distribution }},{{ ansible_distribution_version }},$site,'','','','','',$machtype,$domain,'','','','',{{ ansible_default_ipv4.address }},{{ ansible_default_ipv4.netmask }},{{ ansible_default_ipv4.gateway }},'',$proc,'NA',{{ ansible_processor_count }},{{ ansible_processor_cores }},$memg,$numdsk,$dskapg,'','','','','','','','','7x24x365','','','','Activo','','','','',{{ ambiente }},'',{{ servicio }},'',{{ servicio }},'' > {{ dirwrk }}/Inventario_Inicial_{{ ansible_hostname }}

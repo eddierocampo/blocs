@@ -1,0 +1,64 @@
+---
+- name: Crear directorio HDV -t3_1
+  file:
+    path: '{{ dirhdv }}'
+    state: directory
+    recurse: yes
+    owner: '{{ usrdoc }}'
+    group: '{{ grpdoc }}'
+  tags:
+    - inventario
+    - diskmap
+    - estado
+    - entrega
+    - hdv
+    - AIX
+    - RedHat
+    - t3
+    - t3_1
+  
+- name: Copiar Cfg2Html a los servidores -t3_2
+  unarchive:
+    src: cfg2html.tgz
+    dest: '/opt'
+    mode: '0755'
+  tags:
+    - t3
+    - t3_2
+    
+- name: Ejecutando shell cfg2html -t3_3
+  shell: '/bin/bash /opt/cfg2html/cfg2html'
+  register: out_cfg2html
+  ignore_errors: True   
+  check_mode: False
+  tags:
+    - t3
+    - t3_3
+    
+- name: Validando Salida de cfg2html -t3_4
+  debug: var=out_cfg2html.stdout_lines 
+  ignore_errors: True
+  tags:
+    - t3
+    - t3_4
+    
+- name: Obtener nombre de archivo html -t3_5
+  shell: "ls -l /var/log/cfg2html/ |grep html |awk '{print $9}'"
+  ignore_errors: True
+  check_mode: False
+  register: file_out
+  tags:
+    - t3
+    - t3_5
+    
+- debug: var=file_out.stdout_lines
+
+- name: Recuperando hojas de vida de los servidores -t3_6
+  fetch:
+    src: '/var/log/cfg2html/{{ item }}'
+    dest: '{{ dirout }}/{{ item }}'
+    flat: yes
+  with_items: '{{ file_out.stdout_lines }}'
+  tags:
+    - t3
+    - t3_6

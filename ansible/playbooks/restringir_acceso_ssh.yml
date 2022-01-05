@@ -1,0 +1,44 @@
+# TASK: Restringir acceso por SSH
+ 
+# t1 - name: Crear el grupo en el SO -t1
+# t2 - name: Agregar los usuarios al grupo -t2
+# t3 - name: Agregar AllowGroups al servicio SSH -t3
+# t4 - name: Reiniciando el servicio SSH -t4
+
+---
+- name: Restringir acceso por SSH
+  hosts: devops
+   
+  tasks:
+  - name: Crear el grupo en el SO -t1
+    group:
+        name: sshaccess
+        state: present
+    tags:
+      - t1
+
+  - name: Agregar los usuarios al grupo -t2
+    user:
+      name: "{{ item }}"
+      group: sshaccess
+    loop:
+      - provseti
+      - jenkins
+    tags:
+      - t2
+
+  - name: Agregar AllowGroups al servicio SSH -t3
+    lineinfile:
+      path: /etc/ssh/sshd_config
+      regexp: "AllowGroups sshaccess"
+      state: present
+    tags:
+      - t3
+  
+  - name: Reiniciando el servicio SSH -t4
+    service:
+        name: sshd
+        state: restarted
+    tags:
+      - t4
+ ...

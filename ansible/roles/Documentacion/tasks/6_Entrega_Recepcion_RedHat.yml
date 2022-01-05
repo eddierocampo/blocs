@@ -1,0 +1,22 @@
+---
+- name: Ejecutar Script Generacion Formato Entrega Recepcion
+  shell: 'sh {{ dirwrk }}/gen_entrega_recepcion_RedHat.sh'
+  check_mode: no
+  ignore_errors: yes
+  tags:
+    - estado
+    - RedHat
+
+- name: Recuperar Formato Entrega Recepcion
+  fetch:
+    src: '{{ dirwrk }}/FMTO_Entrega-Recepcion_servidores_{{ ansible_hostname }}'
+    dest: '{{ dirout }}/'
+    flat: yes
+    validate_checksum: no
+  check_mode: no
+  ignore_errors: yes
+  tags:
+    - recover
+    - RedHat
+...
+

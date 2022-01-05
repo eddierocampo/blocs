@@ -1,0 +1,88 @@
+---
+- name: Instalacion de agente FIM (Axont) sobre RedHat
+  hosts: all
+  remote_user: provseti
+# inactivar cuando se use root para la conexion
+  become: yes
+  gather_facts: no
+  vars:
+    DIR_DST: "/tmp"
+  tasks:
+
+  - name: Copiar paquete FIM RedHat
+    copy:
+      src: axont_install_linux/{{ item }}
+      dest: "{{ DIR_DST }}/{{ item }}"
+      owner: root
+      group: root
+      mode: 0755
+    with_items:
+      - axon-agent-3.20.1.4493-1.x86_64.rpm
+      - tw-eg-driver-rhel-1.5.2.237-1.x86_64.rpm
+      - tw-eg-service-1.5.4.283-1.x86_64.rpm
+
+  - name: Validacion de servicio anteriores
+    stat:
+      path: /usr/local/tripwire/te/agent/bin/twdaemon
+    register: fim
+
+  - name: Desactivar Servicio Actual de FIM
+    shell: '/usr/local/tripwire/te/agent/bin/twdaemon stop'
+    check_mode: no
+    ignore_errors: yes
+    when: fim.stat.exists == true
+
+  - name: Remover Version Antigua
+    shell: '/usr/local/tripwire/te/agent/bin/uninstall.sh'
+    check_mode: no
+    ignore_errors: yes
+    when: fim.stat.exists == true
+
+  - name: Check all port numbers are accessible from the current host
+    wait_for:
+      host: 10.140.4.140 
+      port: '{{ item }}'
+      state: started         # Port should be open
+      delay: 0               # No wait before first check (sec)
+      timeout: 3             # Stop checking after timeout (sec)
+    ignore_errors: yes
+    with_items:
+      - 5670
+    register: telnet_state
+
+  - debug: var=telnet_state.results.msg
+ 
+  - name: Instalar FIM RedHat
+    shell: 'rpm -ivh {{ DIR_DST }}/{{ item }}'
+    check_mode: no
+    ignore_errors: yes
+    with_items:
+      - axon-agent-3.20.1.4493-1.x86_64.rpm
+      - tw-eg-driver-rhel-1.5.2.237-1.x86_64.rpm
+      - tw-eg-service-1.5.4.283-1.x86_64.rpm
+    register: telnet_state
+
+  - name: Copia archivo de configuracion 
+    copy:
+      src: 'axont_install_linux/conf/{{ item }}'
+      dest: '/etc/tripwire/'
+      owner: root
+      group: root
+      mode: 0755
+    with_items:
+      - registration_pre_shared_key.txt
+      - twagent.conf
+
+  - name: Habilitar Servicio de FIM 
+    ansible.builtin.systemd:
+      name: '{{ item }}' 
+      state: started
+      enabled: yes
+      daemon_reload: yes
+    with_items:
+      - tw-eg-service.service
+      - tripwire-axon-agent.service
+    register: tripwire
+
+  - debug: var=tripwire.stdout_lines
+...

@@ -1,0 +1,1 @@
+xm list -l [VM_ID]|grep -i xxxxx -B2 -A2

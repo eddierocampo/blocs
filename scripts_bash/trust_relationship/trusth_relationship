@@ -1,0 +1,30 @@
+pipeline {
+    agent any
+
+    stages {
+        
+        stage('Limpiar Llaves') {
+            steps {
+                sh 'rm -fr ~/.ssh/*'
+            }
+        }
+        
+        stage('Generacion Llaves') {
+            steps {
+                sh 'ssh-keygen -t rsa -N "" -f ~/.ssh/id_rsa'
+            }
+        }
+        
+        stage('Copia de Llaves') {
+            steps {
+                sh 'sshpass -p "Temporal12345" ssh-copy-id -o StrictHostKeyChecking=no user_admin@40.76.81.12'
+            }
+        }
+        
+        stage('Host_Key Ansible') {
+            steps {
+                sh 'ssh-keyscan -H vm-davivienda-l_1 >> ~/.ssh/known_hosts'
+            }
+        }
+    }
+}

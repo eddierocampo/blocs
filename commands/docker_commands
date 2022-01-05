@@ -1,0 +1,21 @@
+##### Comandos básicos Docker
+
+docker run
+docker ps -a
+docker run -it --name "name or id" --link
+docker exec -it "name or id"
+docker command --help
+docker ps -a -f "name"
+docker inspect ip or name
+docker kill
+docker start/stop
+docker exec "name" mkdir /prueba_docker
+docker exec it "name" bash
+docker rm
+docker run -d -p 8080:80 --name mi_ngnix ngnix
+docker network create --subnet=172.18.0.0/a6 mi_red
+docker network connect
+docker network inspect
+docker run -it --name xxx --network mi_red ubuntu
+docker network create --subnet=172.18.0.0/16 mi_red
+docker network connect mi_red mi_link

@@ -1,0 +1,158 @@
+####### AWK ######################
+awk '{print $1}' /etc/passwd
+awk -F: '{print $1}' /etc/passwd
+#################################
+
+##### reemplazar en vi ##########
+%s/@/$/g
+%s/P4s$w0rDPC12021*/P@ssw0rdpr0vS3t1/g
+:1,$d
+#################################
+
+####### usermod #################
+usermod -aG oinstall oracle
+usermod -aG wheel athadmin
+groupadd admindb
+#################################
+
+###### crear lvm full o % #######
+pvcreate $path
+vgcreate vgroot $path
+vgdisplay
+
+lvcreate -n lvtmp --size 5G vgroot
+lvcreate -l 100%FREE -n lvbackup vgbackup
+
+lvextend -L+5G /dev/centos/var
+resize2fs /dev/centos/var
+xfs_growfs /dev/centos/var
+
+
+mkfs.xfs /dev/vgroot/lvdatos
+mkdir /tmp1
+/dev/vgroot/lvvarlog        /var/log            xfs     defaults              0 0
+/dev/vgswap/lvswap swap swap defaults 0 0
+mount -a
+
+
+APAGAR SWAPFILE:
+swapon -s [muestra la swap en el sistema]
+swapoff /var/swapfile
+
+mkswap /dev/vgswap/lvswap
+swapon -v /dev/vgswap/lvswap
+
+#################################
+
+##### usuarios ##################
+chage --list entelgy
+chage -E "2021-01-31" entelgy
+chage -M -1 provseti
+chage -d 0 entelgy <exigir cambio de contraseña>
+passwd -S user1
+useradd -m athadmin
+echo "P4s$w0rDPC12021*" | passwd --stdin provseti
+#################################
+
+######## zona y hora ############
+timedatectl
+timedatectl list-timezones
+timedatectl set-timezone America/Bogota
+
+tzutil /s "SA Pacific Standard Time"
+w32tm /query /configuration
+w32tm /query /status
+w32tm /config /manualpeerlist:169.254.169.123 /syncfromflags:manual /update
+w32tm /query /configuration
+#################################
+
+######### rsyslog ###############
+vim /etc/rsyslog.conf
+*.* @10.140.4.65:520
+*.* @10.140.4.66:520
+@udp
+@@tcp
+#################################
+
+####### agregar fecha a file ####
+"$(date +"%Y%m%d").bck"
+#################################
+
+###### activar sudo log #########
+visudo
+	Defaults syslog=local1
+vim /etc/rsyslog.conf
+	Despues de /var/log/messages
+	local1.*                /var/log/sudo.log
+systemctl restart rsyslog
+systemctl status rsyslog
+sudo cat /var/log/sudo.log
+#################################
+
+###### Prueba scan port nc ######
+nc -zv -w 3 10.10.8.8 20-80
+#################################
+
+###### buscar ##################
+find / -name 
+
+ss -tulwn
+netstat -tulpn | grep LISTEN
+
+hostnamectl set-hostname wue1atpspqaap4
+
+last reboot | head -1
+
+chronyc sources -v
+
+###### ssl ###################
+openssl req -newkey rsa:4096 \
+            -x509 \
+            -sha256 \
+            -days 3650 \
+            -nodes \ [si requiere passphare]
+            -out example.crt \
+            -keyout example.key
+
+openssl req -newkey rsa:2048 -new -nodes -x509 keyout idmapmempr01.pem -out idmapmempr01.pem
+openssl req -new -key idmapmempr01.pem -out idmapmempr01.csr
+openssl req -newkey rsa:2048 -nodes -out idmapmempr01.csr -keyout idmapmempr01.pem
+
+Country Name (2 letter code) [AU]:CO
+State or Province Name (full name) [Some-State]:Cundinamarca
+Locality Name (eg, city) []:Bogota
+Organization Name (eg, company) [Internet Widgits Pty Ltd]:ATH
+Organizational Unit Name (eg, section) []:IT
+Common Name (e.g. server FQDN or YOUR name) []:pruebas.ath.com.co
+Email Address []:
+
+Copiar el contenido del cert
+
+
+sudo dpkg-reconfigure ca-certificates
+sudo update-ca-certificates
+
+################################
+
+mount -o loop /path/to/my-iso-image.iso /mnt/iso
+mount /path_device/ /mnt/iso
+
+################################
+
+Validar estado de memoria
+ps -o pid,user,%mem,command ax | sort -b -k3 -r
+
+sudo pmap 917
+sudo pmap 917 | tail -n 1
+sudo pmap 917 | tail -n 1 | awk '/[0-9]K/{print $2}'
+sudo pmap 917 531 | grep total
+
+touch sysmon
+chmod +x sysmon
+
+
+sudo mv -v sysmon /usr/bin
+
+################################
+
+

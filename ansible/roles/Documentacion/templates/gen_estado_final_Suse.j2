@@ -1,0 +1,41 @@
+#!/bin/ksh
+
+###########################################################
+### Genereacion Documento De Estado Final Configuracion ###
+###########################################################
+
+mkdir -p {{ dirwrk }} 
+touch {{ dirwrk }}/Estado_Config_{{ ansible_hostname }}
+alldsk=0
+
+### Calcula Memoria en GB ###
+memg=`free -g |grep Mem |awk '{print $2}'`
+
+### Calcula Tamano Disco SO en GB ###
+dsksog=`lsblk |grep sda |grep -v part |awk '{print $4}' |sed "s/G/ /g"`
+
+### Calcula Espacio Discos APP ###
+### Calcula Tamaño Swap ###
+ds=`lsvg |grep swap`
+        if [ "$ds" = '' ];
+                then
+                diskswg='0'
+                else
+                disksw=`lsvg $ds |grep PERMISSION |awk '{print $7}' |sed "s/(//g"`
+                diskswg=`expr $disksw / 1024`
+        fi
+
+### Calcula Tamaño De Discos APP ###
+dskapp=`lsblk -b | grep disk | egrep -v 'fd0|lvm|ram|sda' | awk 'BEGIN {suma=0} {suma+=$4} END {print suma/1024/1024/1024, "GB"}'`
+
+# Saca WWNs de la maquina
+wwn={{ ansible_fibre_channel_wwn | join(' ') }}
+if [ "$wwn" = "" ]
+	then wwn="NA"
+fi
+
+# Resta SO y Swap - Resutado GB
+# dskapp=`echo $(expr $dskpar - $diskswg )`
+
+### Generacion CSV
+echo {{ ansible_processor_cores }},$memg,$dsksog 'GB',$dskapp,{{ ansible_os_family }} {{ ansible_distribution_version }},{{ ansible_hostname }},{{ ansible_default_ipv4.address }},$wwn > {{ dirwrk }}/Estado_Config_{{ ansible_hostname }}

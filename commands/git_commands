@@ -1,0 +1,26 @@
+#### Command GIT
+
+# Inicializa el repositorio
+git init
+git status
+git commit -m 'mensaje del commit'
+
+git push -u origin master
+
+
+/opt/ansible/playbooks
+/opt/ansible/playbooks/files
+/opt/ansible/playbooks/vars
+/opt/ansible/playbooks/templates
+/opt/ansible/roles
+/opt/ansible/roles/ansible.cfg
+
+
+/etc/ansible
+
+backlog
+to do
+In Progress
+Evaluate
+
+

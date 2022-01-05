@@ -1,0 +1,12 @@
+aws configure sso
+https://ssoathlzpci.awsapps.com/start/
+us-east-1
+aws s3 ls --profile ATH-DEVQA-SSM-ADM-217418851808
+aws s3 ls --profile ATH-DEVQA-SSM-ADM-766312396830
+aws s3 ls --profile ATH-DEVQA-SSM-ADM-459985484137
+aws ssm start-session --target "i-06849ca56f9cb83ff" --document-name AWS-StartPortForwardingSession --parameters portNumber=3389,localPortNumber=58950  --profile ATH-SSM-ADM-426766029327
+aws ssm start-session --target "i-061da0ed56748a6ab" --document-name AWS-StartPortForwardingSession --parameters portNumber=3389,localPortNumber=10022  --profile ATH-DEVQA-SSM-ADM-644692455453
+
+https://ssoath-lz.awsapps.com/start#/
+
+aws s3 ls --profile ATH-SSM-ADM-426766029327

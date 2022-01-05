@@ -1,0 +1,40 @@
+# tasks file for RHEL7-CIS
+- name: Check OS version and family
+  fail:
+    msg: "This role can only be run against OracleLinux 7. {{ ansible_distribution }} {{ ansible_distribution_major_version }} is not supported."
+  when:
+    - ansible_distribution != 'OracleLinux'
+    - ansible_distribution_major_version != '7'
+  tags:
+    - always
+
+- include: odb21c.yml
+  become: yes
+  when: odb21c
+
+- include: odb19c.yml
+  become: yes
+  when: odb19c
+
+- include: odb18c.yml
+  become: yes
+  when: odb18c
+
+- include: odb13c.yml
+  become: yes
+  when: odb13c
+
+- include: odb12c.yml
+  become: yes
+  when: odb12c
+
+- include: odb12c.yml
+  become: yes
+  when: odb12c
+
+- include: odb11g.yml
+  become: yes
+  when: odb11g
+
+- include: general.yml
+  become: yes

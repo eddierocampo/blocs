@@ -1,0 +1,15 @@
+---
+- name: adicionar usuarios a Sudo
+  lineinfile:
+    dest: /etc/sudoers
+    state: present
+    regexp: '^{{ item.usuarios }}'
+    line: "{{ item.usuarios }} ALL=(ALL) NOPASSWD:ALL"
+    validate: 'visudo -cf %s'
+  # TODO: Fix literal compare
+  when: item.0.use_sudo|d(false)|bool == true and item.1 in group_names # noqa 601
+  with_subelements:
+    - "{{ users }}"
+    - servers
+  loop:
+    - "{{ USERS }}"

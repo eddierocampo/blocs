@@ -1,0 +1,40 @@
+- name: Crear directorio HDV
+  file:
+    path: '{{ dirhdv }}'
+    state: directory
+    recurse: yes
+    owner: 'setidep'
+    group: 'setiadm'
+  tags:
+    - inventario
+    - diskmap
+    - estado
+    - entrega
+    - hdv
+    - AIX
+    - RedHat
+
+- name: Copiar Cfg2Html a los servidores
+  copy:
+    src: cfg2html_aix.tar
+    dest: '/opt'
+    mode: '0777'
+
+- name: Descomprime Cfg2Html
+  raw: cd /opt; /usr/bin/tar -xvf /opt/cfg2html_aix.tar
+
+- name: Ejecutando shell cfg2html
+  shell: '/bin/ksh93 /opt/cfg2html/cfg2html'
+  register: out_cfg2html
+  ignore_errors: True
+
+- name: Validando Salida de cfg2html
+  debug: var=out_cfg2html.stdout_lines
+  ignore_errors: True
+
+- name: Recuperando hojas de vida de los servidores
+  fetch:
+    src: '/var/log/cfg2html/{{ ansible_hostname }}.html'
+    dest: '{{ dirout }}/{{ ansible_hostname }}.html'
+    flat: yes
+

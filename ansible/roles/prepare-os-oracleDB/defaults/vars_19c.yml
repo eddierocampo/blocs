@@ -1,0 +1,90 @@
+### Listado de paquetes prerequisitos
+rpm_list_oracle.19c:
+  - bc
+  - binutils
+  - elfutils-libelf
+  - elfutils-libelf-devel
+  - fontconfig-devel
+  - glibc
+  - glibc-devel
+  - ksh
+  - libaio
+  - libaio-devel
+  - libXrender
+  - libX11
+  - libXau
+  - libXi
+  - libXtst
+  - libgcc
+  - libnsl
+  - librdmacm
+  - libstdc++
+  - libstdc++-devel
+  - libxcb
+  - libibverbs
+  - make
+  - smartmontools
+  - sysstat
+  - net-tools
+  - python3
+  - python3-configshell
+  - python3-rtslib
+  - python3-six
+  - targetcli
+  - nfs-utils
+  - gcc-c++
+  - glibc-devel.i686
+  - glibc.i686
+  - libstdc++.i686
+  - motif
+  - motif-devel
+  - redhat-lsb
+  - redhat-lsb-core
+  ### Paquetes X11
+  - xorg-x11-xauth.x86_64
+  - xorg-x11-server-utils.x86_64
+  - xorg-x11-utils.x86_64
+  ### Java
+  - java-1.8.0-openjdk
+
+###  Setting Virtual Memory
+virtual_memory.19c: {
+  vm.swappiness.19c: 1,
+  vm.dirty_background_ratio.19c: 3,
+  vm.dirty_ratio.19c: 80,
+  vm.dirty_expire_centisecs.19c: 500,
+  vm.dirty_writeback_centisecs.19c: 100
+}
+### Setting Shared Memory (SHMMAX, SHMALL, SHMMNI)
+shm_memory.19c: {
+  kernel.shmmax.19c: 8329226240,
+  kernel.shmall.19c: 8329226240,
+  kernel.shmmni.19c: 4096
+}
+###   Setting Semaphores (SEMMSL, SEMMNI, SEMMNS)
+kernel_memory.19c: {
+  kernel.sem.19c: '250 32000 100 128'
+}
+### Ephemeral Network Ports
+port_memory.19c: {
+  net.ipv4.ip_local_port_range.19c:  '9000 65500'
+}
+### Optimizing Network Settings
+network_memory.19c: {
+  net.core.rmem_default.19c: 262144,
+  net.core.rmem_max.19c: 4194304,
+  net.core.wmem_default.19c: 262144,
+  net.core.wmem_max.19c: 1048576
+}
+### Increasing synchronous I/O Requests
+io_memory.19c: {
+  fs.aio-max-nr.19c: 1048576
+}
+### Increasing File Handles
+file_memory.19c: {
+  fs.file-max.19c: 6815744
+}
+
+kernel_ops_panic.19c: {
+  kernel.panic_on_oops.19c: 1
+}

@@ -1,0 +1,9 @@
+1. SELinux debe estar deshabilitado o en modo permisivo
+2. Debo conocer los usuarios y cada uno con su grupo (variables)
+3. Debo conocer o la ruta del disco que se va a particionar
+4. tener claro la llave de conexión de cada usuario
+5. Esto funciona para OL 7, RHEL 7, CentOS 7
+6. Se debe ejcutar como root y que previamente no se hayan ejcutado scripts de modificaciones, en caso de si, se debe revisar el script
+7. Darle permisos a los archivos en modo ejecución chmod +x
+
+

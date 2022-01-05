@@ -1,0 +1,60 @@
+# TASK: ROLLBACKP ALISTAMIENTO SO
+ 
+# t1- name: Restaurar backup de /etc/fstab -t1
+# t2- name: Configurar en modo enforcing el Selinux -t2
+# t3- name: Desinstalar paquetes -t3
+# t4- name: Reinicio del SO para aplicar los cambios -t4
+# t5- name: Eliminar las carpetas -t5
+
+---
+- name: RollBackup Alistamiento SO
+  hosts: all
+
+  tasks:
+  - name: Restaurar backup de /etc/fstab -t1
+    copy:
+      src: /etc/ansible/files/fstab_rhel79
+      dest: /etc/fstab
+    tags:
+      - t1
+  
+  - name: Configurar en modo enforcing el Selinux -t2
+    selinux:
+        policy: targeted
+        state: enforcing
+    when: ansible_distribution == "RedHat"
+    tags:
+      - t2
+
+  - name: Desinstalar paquetes -t3
+    yum:
+      name: "{{ item }}"
+      state: absent
+    when: ansible_distribution == "RedHat"
+    loop:
+      - parted
+      - lvm2
+    tags:
+      - t3
+
+  - name: Reinicio del SO para aplicar los cambios -t4
+    reboot:
+      post_reboot_delay: 30
+    tags:
+      - t4
+
+  - name: Eliminar las carpetas -t5
+    file:
+        path: "{{ item }}"
+        state: absent
+    loop:
+      - /home1
+      - /usr1
+      - /tmp1
+      - /varlog
+      - /varlogtmp
+      - /varlogaudit
+      - /root/scripts
+    tags:
+      - t5
+...

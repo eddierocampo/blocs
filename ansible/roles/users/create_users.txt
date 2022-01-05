@@ -1,0 +1,51 @@
+# TASK: CREANDO USUARIOS
+ 
+# t1 - name: Creando los usuarios -t1
+
+
+---
+- name: Crear usuarios
+  hosts: all
+
+  tasks:
+  - name: Creando los usuarios -t1
+    user:
+        name: "{{ item.nombre }}"
+        comment: "{{ item.comentario }}"
+        groups: 
+        append: yes
+    loop:
+      - {nombre: 'nombre_usuario', comentario: 'Nombre completo/correo/dirección/area'}
+    tags:
+      - t1
+  
+  - name: copiando listado usuarios -t2
+    copy:
+      src: /etc/users.txt
+      dest: /root/users.txt
+      mode: 640
+    tags:
+      - t2
+
+  - name: copiando script cambio de password -t3
+    copy:
+      src: /etc/change_password.sh
+      dest: /root/change_password.sh
+      mode: +x
+    tags:
+      - t3
+
+  - name: Ejecutar script de cambio de contraseña -t4
+    shell: "/bin/bash /root/change_password.sh >> /root/change_password.log"
+    tags:
+      - t4
+  
+  - name: Eliminando archivos -t5
+    file:
+      path: /root/scripts/cp_fs_so_umount.sh
+      state: absent
+    loop:
+      - /root/users.txt
+      - /root/change_password.sh
+    tags:
+      - t5

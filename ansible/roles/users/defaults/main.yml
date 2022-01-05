@@ -1,0 +1,9 @@
+---
+# defaults file for users
+
+USERS:
+    - {usuarios: 'prv_smelo', comentario: 'Sebastian Melo - SETI', uid: '1500'}
+    - {usuarios: 'prv_fcastillo', comentario: 'Freddy A. Castillo - SETI', uid: '1501'}
+    - {usuarios: 'prv_ofranco', comentario: 'Oscar Franco - SETI', uid: '1502'}
+    - {usuarios: 'prv_eocampo', comentario: 'Eddier Ocampo - SETI', uid: '1503'}
+    - {usuarios: 'setideploy', comentario: 'Usuario de despliegue - SETI', uid: '1504'}

@@ -1,0 +1,45 @@
+apt-get install realmd sssd sssd-tools libpam-sss libnss-sss
+apt-get install samba-libs samba-common-bin
+apt-get install krb5-user adcli packagekit
+vim /etc/sssd/sssd.conf
+	[nss]
+	filter_groups = root
+	filter_users = root
+	reconnection_retries = 3
+
+	[pam]
+	reconnection_retries = 3
+
+	[sssd]
+	domains = SETIADLAB.LOCAL
+	config_file_version = 2
+	services = nss, pam
+
+	[domain/SETIADLAB.LOCAL]
+	ad_domain = SETIADLAB.LOCAL
+	krb5_realm = SETIADLAB.LOCAL
+	realmd_tags = manages-system joined-with-adcli
+	cache_credentials = True
+	id_provider = ad
+	krb5_store_password_if_offline = True
+	default_shell = /bin/bash
+	ldap_id_mapping = True
+	use_fully_qualified_names = False
+	fallback_homedir = /home/%d/%u
+	access_provider = ad
+vim /etc/realmd.conf
+
+	[service]
+
+	automatic-install = no
+vim /etc/pam.d/common-session
+## despues de esta linea: session optional                        pam_sss.so
+	session optional        pam_mkhomedir.so  skel = /etc/skel/  mask=0077
+realm discover setiadlab.local
+realm join setiadlab.com.co -U administrator –verbose
+
+
+
+
+
+

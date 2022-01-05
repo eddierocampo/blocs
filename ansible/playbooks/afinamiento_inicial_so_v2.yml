@@ -1,0 +1,120 @@
+# TASK: ALISTAMIENTO 1 SO
+ 
+# t1 - name: Configurar en modo permissive el selinux -t1
+# t2 - name: Instalar paquete paquetes -t2
+# t3 - name: Crear la partición del disco para separar SO -t3
+# t4 - name: Crear el vgroot -t4
+# t5 - name: Crear LV's para vgroot -t5
+# t6 - name: Crear formato xfs para los LV's -t6
+# t7 - name: Crear directorios temporales -t7
+# t8 - name: Montaje de puntos de filesystem -t8
+# t9 - name: Reinicio del SO para aplicar los cambios -t9
+---
+- name: Alistamiento 1 SO
+  hosts: all
+   
+  tasks:
+  - name: Configurar en modo permissive el selinux -t1
+    selinux:
+        policy: targeted
+        state: permissive
+    when: ansible_distribution == "RedHat"
+    tags:
+      - t1
+
+  - name: Instalar paquete paquetes -t2
+    yum:
+      name: "{{ item }}"
+      state: present
+    when: ansible_distribution == "RedHat"
+    loop:
+      - parted
+      - lvm2
+    tags:
+      - t2
+
+  - name: Crear la partición del disco para separar SO -t3
+    parted:
+      device: /dev/sdb
+      number: 1
+      flags: [ lvm ]
+      state: present
+    tags:
+      - t3
+  
+  - name: Crear el vgroot -t4
+    lvg:
+        vg: vgroot
+        pvs: /dev/sdb1
+    tags:
+      - t4
+
+  - name: Crear LV's para vgroot -t5
+    lvol:
+        vg: vgroot
+        lv: "{{ item.lv }}"
+        size: "{{ item.size }}"
+        state: present
+    loop:
+      - {lv: 'lvvartmp', size: '5g'}
+      - {lv: 'lvhome', size: '10g'}
+      - {lv: 'lvusr', size: '5g'}
+      - {lv: 'lvvarlog', size: '5g'}
+      - {lv: 'lvvarlogaudit', size: '5g'}
+      - {lv: 'lvtmp', size: '5g'}
+    tags:
+      - t5
+
+  - name: Crear formato xfs para los LV's -t6
+    filesystem:
+        fstype: xfs
+        dev: /dev/vgroot/{{ item }}
+    loop:
+      - lvvartmp
+      - lvvarlog
+      - lvvarlogaudit
+      - lvhome
+      - lvusr
+      - lvtmp
+    tags:
+      - t6
+
+  - name: Crear directorios temporales -t7
+    file:
+        path: "{{ item }}"
+        owner: root
+        group: root
+        state: directory
+    loop:
+      - /home1
+      - /usr1
+      - /tmp1
+      - /varlog
+      - /varlogtmp
+      - /varlogaudit
+    tags:
+      - t7
+
+  - name: Montaje de puntos de filesystem -t8
+    mount:
+        path: "{{ item.path }}"
+        src: "{{ item.dev }}"
+        fstype: xfs
+        opts: defaults
+        state: present
+    loop:
+      - {path: '/usr1', dev: '/dev/vgroot/lvusr'}
+      - {path: '/home1', dev: '/dev/vgroot/lvhome'}
+      - {path: '/tmp1', dev: '/dev/vgroot/lvtmp'}
+      - {path: '/vartmp', dev: '/dev/vgroot/lvvartmp'}
+      - {path: '/varlog', dev: '/dev/vgroot/lvvarlog'}
+      - {path: '/varlogaudit', dev: '/dev/vgroot/lvvarlogaudit'}
+    tags:
+      - t8
+
+  - name: Reinicio del SO para aplicar los cambios -t9
+    reboot:
+      post_reboot_delay: 30
+    tags:
+      - t9
+...

@@ -1,0 +1,27 @@
+all:
+  children:
+    azure:
+      hosts:
+        vm_linuxo_prod_iac_1:
+        vm_linuxwl_prod_iac_1:
+      vars:
+        ansible_user: user_admin
+        ansible_sudo_pass: Temporal123
+    lab:
+      hosts:
+        iaacrhel8:
+        iaacol8:
+      vars:
+        ansible_user: provseti
+        ansible_sudo_pass: P4ssw0rD2021
+    dboracle_azure:
+      hosts:
+        vm_linuxwl_prod_iac_1:
+    weblogic_azure:
+      hosts:
+        vm_linuxwl_prod_iac_1:
+  vars:
+    ansible_become: yes
+  
+
+    

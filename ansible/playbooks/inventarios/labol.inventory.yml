@@ -1,0 +1,11 @@
+all:
+  children:
+    ol:
+      hosts:
+        labol7ansible:
+          ansible_host: 192.168.122.61
+  vars:
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+    ansible_user: provseti
+    ansible_sudo_pass: P4ssw0rD2021*
+    ansible_become: yes

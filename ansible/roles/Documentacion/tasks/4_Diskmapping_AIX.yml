@@ -1,0 +1,21 @@
+---
+- name: Ejecutar Script Generacion Diskmap
+  shell: 'sh {{ dirwrk }}/gen_diskmap_AIX.sh'
+  check_mode: no
+  ignore_errors: yes
+  tags:
+    - diskmap
+    - AIX
+
+- name: Recuperar archivo de diskamp generado
+  fetch:
+    src: "{{ dirwrk }}/Diskmapping_ATH_{{ ansible_hostname }}"
+    dest: "{{ dirout }}/"
+    flat: yes
+    validate_checksum: no
+  check_mode: no
+  ignore_errors: yes
+  tags:
+    - recover
+    - AIX
+...

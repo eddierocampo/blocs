@@ -1,0 +1,5 @@
+{% for cred in UDEV_CRED %}
+  {% for disk in MPATHS %}
+KERNEL=="dm-*",ENV{DM_UUID}=="part1-mpath-{{ disk.WWPN }}", OWNER="{{ cred.USER }}", GROUP="{{ cred.GROUP }}", MODE="{{ cred.MODE }}"
+   {% endfor %}
+{% endfor %}

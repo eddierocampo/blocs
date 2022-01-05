@@ -1,0 +1,55 @@
+all:
+  children:
+    drp:
+      hosts:
+        porapwebdr01:
+          ansible_host: 10.160.17.68
+        porapwebdr02:
+          ansible_host: 10.160.17.69
+        porapwebdr03:
+          ansible_host: 10.160.17.70
+        porapcordr01:
+          ansible_host: 10.160.17.135
+        porapcordr02:
+          ansible_host: 10.160.17.137
+        porapcordr03:
+          ansible_host: 10.160.17.138
+        porapelsdr01:
+          ansible_host: 10.160.17.134
+        porapelsdr02:
+          ansible_host: 10.160.17.136
+        porapstgdr01:
+          ansible_host: 10.160.17.133
+    fortalecimiento:
+      hosts:
+        porapcorprd03:
+          ansible_host: 10.160.0.139
+        porapwebprd03:
+          ansible_host: 10.160.0.70
+        porapstgprd02:
+          ansible_host: 10.160.0.161
+    fortalecimiento2:
+      hosts:
+        porapelsprd03:
+          ansible_host: 10.160.0.135
+        porapelsprd04:
+          ansible_host: 10.160.0.160
+    martillo:
+      hosts:
+        ZUEATMARPRBST01:
+          ansible_host: 10.160.20.98
+        ZUEATMARPRBST03:
+          ansible_host: 10.160.20.99
+        #martilloqa:
+          # hosts:
+        ZUEATMARDRBST02:
+          ansible_host: 10.160.24.98
+  vars:
+    ansible_user: provseti
+    ansible_sudo_pass: provseti
+    ansible_ssh_pass: provseti
+    ansible_become: yes
+    ambiente: Produccion
+    ansible_use: APP
+    ansible_site: Azure
+    

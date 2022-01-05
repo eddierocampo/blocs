@@ -1,0 +1,2 @@
+#sblapgtwpt01	ansible_host=10.130.3.222	ansible_use=weblogic	ambiente=PT	anible_site=zf
+fdlbdcorqa01	ansible_host=10.130.1.245	ansible_use=oralce	ambiente=PT	anible_site=zf

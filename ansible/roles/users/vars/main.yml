@@ -1,0 +1,8 @@
+---
+# vars file for users
+usuarios: {{item}}
+loop:
+  - prv_eocampo
+  - prv_smelo
+  - prv_ofranco
+  - prv_fcastillo

@@ -1,0 +1,48 @@
+---
+- name: Consolida Archivos Para Generacion De Excel
+  shell: '/usr/bin/sh {{ dirout }}/consolida_archivos.sh'
+  check_mode: no
+  ignore_errors: yes
+  delegate_to: localhost
+  run_once: true
+  tags:
+    - excel
+    - RedHat
+    - AIX
+
+- name: Compresion De Archivos Para Envio
+  archive:
+    path: '{{ dirzip }}/*'
+    dest: '{{ dirzip }}.zip'
+    format: zip
+  delegate_to: localhost
+  run_once: true
+  tags:
+    - zip
+
+#- name: Envia Archivos Comprimidos Via Mail
+#  mail:
+#    host: 10.129.0.11
+#    port: 25
+#   subject: Documentacion del proyecto {{ servicio }}
+#   body: |
+#    Buen dia.
+#
+#    Se adjunta archivo zip con la documentacion del proyecto {{ servicio }}. 
+#    Favor diligenciar los formatos de Monitoreo y Backup y validar la informacion en los archivos generados antes de entregar a ATH.
+#
+#    Gracias.
+#  from: provseti@IBMSysDir (Usuario Aprovisionamiento SETI)
+#  to:
+#    - Oscar Franco <proveedor_omfranco@ath.com.co> 
+#    - Sebastian Melo <sebastianmelo@seti.com.co>
+#  cc:
+#    - Oscar Franco <oscarfranco@seti.com.co>
+#  attach:
+#    - '{{ dirzip }}.zip'
+#  charset: us-ascii
+#run_once: true
+#delegate_to: localhost
+#tags:
+#  - mail
+...

@@ -1,0 +1,67 @@
+
+
+######Estructura general Ansible:
+ansible -i {ruta del inventario} -m {comando Ansible} -a '{parámetros de so o de ansible}' {máquina o grupo} [--become] (become si requiere ejeuctar como root)
+
+Las líneas quedan:
+ansible -i {path inventario} -m ...[instrucciones]... {equipo/grupo} --become[opcional]
+
+
+#### [instrucciones]
+
+#### SHELL
+shell -a '{comando a ejecutar en el OS}'
+#### Ejemplos
+ansible -i inventory -m shell -a 'cat /etc/fstab' prdrhel
+ansible -i inventory -m shell -a 'ls -la /tmp/javasharedresources' prdrhel
+ansible -i inventory -m shell -a 'chmod o-w /data' prdal 
+ansible -i inventory -m shell -a 'touch /data/prueba' prdal 
+ansible -i inventory -m shell -a 'rm -rf /data/prueba' prdal 
+
+#### LINEINFILE
+# Reemplazar lineas
+lineinfile -a 'path={ruta} regexp="^{expresión o linea}" line="{expresión o línea}"'
+# Ubicar antes de
+lineinfile -a 'path={ruta} insertafter="^{expresión o linea}" line="{expresión o línea}"'
+# Ubicar despues
+lineinfile -a 'path={ruta} insertbefore="^{expresión o linea}" line="{expresión o línea}"'
+# Adicionar una linea nueva
+lineinfile -a 'path={ruta} line="{expresión o línea}" create=yes'
+# Eliminar lineas
+lineinfile -a 'path={ruta} line="{expresión o línea}" state=absent'
+
+#### YUM
+yum -a 'name={nombre del paquete} state={present/absent/list}'
+# Ejemplos
+ansible -i inventory -m yum -a 'name="telnet" state=present' drrhel --become
+ansible -i inventory -m yum -a 'name="telnet" state=absent' drrhel --become
+ansible -i inventory -m yum -a 'name=tlenet state=list' WUE1ATPSPFIMAP1 --become
+ansible -i inventory -m yum -a 'name=rsync state=absent' WUE1ATPSPFIMAP1 --become
+
+#### FILE
+file -a 'path={ruta} mode={permisos} group={grupo} state=directory'
+# Ejemplo
+ansible -i inventory -m file -a 'path=/etc/cron.allow state=touch mode=600' secrhel --become
+
+#### COPY
+copy -a 'src={ruta} dest={ruta} owner={usuario} group={grupo} mode={permisos}'
+# Ejemplo
+ansible -i inventory -m copy -a 'src=/home/provseti/all_logs.sh dest=/tmp/all_logs.sh owner=root group=root mode=640' guaral --become
+
+#### BLOCKINFILE
+blockinfile -a 'path={ruta} block="| prueba "'
+
+#### CRON
+cron -a 'name={Nombre de cront} minute={} hour={} user={usuario} job="{instrucción}"'
+# Ejemplo
+ansible -m cron -a 'name="Integrity FS" minute="0" hour="5" user=root job="/usr/bin/aide.wrapper --config /etc/aide/aide.conf --check"' localhost
+
+#### USER
+user -a 'name={nombre usuario} grupo={al que pertenece}' {equipo/grupo}
+# Ejemplo
+ansible -i pci.inventory.yml -m user -a 'name=provseti groups=adminso' prdrhel
+
+#### BUILTIN.GROUP
+ansible.builtin.group -a 'name={nombre del grupo} state={present/absent}' {equipo/grupo}
+#Ejemplo
+ansible -i pci.inventory.yml -m ansible.builtin.group -a 'name=adminso state=present' drrhel

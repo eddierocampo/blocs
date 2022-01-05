@@ -1,0 +1,286 @@
+# TASK: ALISTAMIENTO 1 SO
+ 
+# t1- name: Configurar en modo permissive el selinux - RedHat
+
+# t2- name: Crear la partición del disco para separar SO -t2
+# t3- name. Crear el VG vgroot con todo el espacio -t3
+
+# t4- name: Crear LV para /home -t4
+# t5- name: Crear LV para /tmp -t5
+# t6- name: Crear LV para /usr -t6
+# t7- name: Crear LV para /var/log -t7
+# t8- name: Crear LV para /var/log/audit -t8
+# t9- name: Crear LV para /var/tmp -t9
+
+#t10- name: Crear formato xfs para /home -t10
+#t11- name: Crear formato xfs para /tmp -t11
+#t12- name: Crear formato xfs para /usr -t12
+#t13- name: Crear formato xfs para /var/log -t13
+#t14- name: Crear formato xfs para /var/log/audit -t14
+#t15- name: Crear formato xfs para /var/tmp -t15
+
+#t16- name: Crear directorio temporal /home1 -t16
+#t17- name: Crear directorio temporal /tmp1 -t17
+#t18- name: Crear directorio temporal /usr1 -t18
+#t19- name: Crear directorio temporal /varlog -t19
+#t20- name: Crear directorio temporal /varlogaudit -t20
+#t21- name: Crear directorio temporal /vartmp -t21
+
+#t22- name: Montaje temporal de /home -t22
+#t23- name: Montaje temporal de /tmp -t23
+#t24- name: Montaje temporal de /usr1 -t24
+#t25- name: Montaje temporal de /varlog -t25
+#t26- name: Montaje temporal de /varlogaudit -t26
+#t27- name: Montaje temporal de /vartmp -t27
+ 
+---
+- name: Alistamiento 1 SO
+  hosts: all
+   
+  tasks:
+  - name: Configurar en modo permissive el selinux -t1
+    selinux:
+        policy: targeted
+        state: permissive
+    when: ansible_distribution == "RedHat"
+    tags:
+      - t1
+
+  - name: Instalar paquete parted -t2
+    yum:
+      name: parted
+      state: present
+    when: ansible_distribution == "RedHat"
+    
+  - name: Instalar paquete lvm2 -t2
+    yum:
+      name: lvm2
+      state: present
+    when: ansible_distribution == "RedHat"  
+
+  - name: Crear la partición del disco para separar SO -t2
+    parted:
+      device: /dev/sdb
+      number: 1
+      flags: [ lvm ]
+      state: present
+    tags:
+      - t2
+  
+  - name: Crear el VG vgroot con todo el espacio -t3
+    lvg:
+        vg: vgroot
+        pvs: /dev/sdb1
+    tags:
+      - t3
+
+  - name: Crear LV para /home -t4
+    lvol:
+        vg: vgroot
+        lv: lvhome
+        size: 10g
+        state: present
+    tags:
+      - t4
+
+  - name: Crear LV para /tmp -t5
+    lvol:
+        vg: vgroot
+        lv: lvtmp
+        size: 5g
+        state: present
+    tags:
+      - t5
+
+  - name: Crear LV para /usr -t6
+    lvol:
+        vg: vgroot
+        lv: lvusr
+        size: 5g
+        state: present
+    tags:
+      - t6
+
+  - name: Crear LV para /var/log -t7
+    lvol:
+        vg: vgroot
+        lv: lvvarlog
+        size: 5g
+        state: present
+    tags:
+      - t7
+
+  - name: Crear LV para /var/log/audit -t8
+    lvol:
+        vg: vgroot
+        lv: lvvarlogaudit
+        size: 5g
+        state: present
+    tags:
+      - t8
+    
+  - name: Crear LV para /var/tmp -t9
+    lvol:
+        vg: vgroot
+        lv: lvvartmp
+        size: 5g
+        state: present
+    tags:
+      - t9
+
+  - name: Crear formato xfs para /home -t10
+    filesystem:
+        fstype: xfs
+        dev: /dev/vgroot/lvhome
+    tags:
+      - t10
+
+  - name: Crear formato xfs para /tmp -t11
+    filesystem:
+        fstype: xfs
+        dev: /dev/vgroot/lvtmp
+    tags:
+      - t11
+
+  - name: Crear formato xfs para /usr -t12
+    filesystem:
+        fstype: xfs
+        dev: /dev/vgroot/lvusr
+    tags:
+      - t12
+
+  - name: Crear formato xfs para /var/log -t13
+    filesystem:
+        fstype: xfs
+        dev: /dev/vgroot/lvvarlog
+    tags:
+      - t13
+
+  - name: Crear formato xfs para /var/log/audit -t14
+    filesystem:
+        fstype: xfs
+        dev: /dev/vgroot/lvvarlogaudit
+    tags:
+      - t14
+
+  - name: Crear formato xfs para /var/tmp -t15
+    filesystem:
+        fstype: xfs
+        dev: /dev/vgroot/lvvartmp
+    tags:
+      - t15
+
+  - name: Crear directorio temporal /home1 -t16
+    file:
+        path: /home1
+        owner: root
+        group: root
+        state: directory
+    tags:
+      - t16
+
+  - name: Crear directorio temporal /tmp1 -t17
+    file:
+        path: /tmp1
+        owner: root
+        group: root
+        state: directory
+    tags:
+      - t17
+
+  - name: Crear directorio temporal /usr1 -t18
+    file:
+        path: /usr1
+        owner: root
+        group: root
+        state: directory
+    tags:
+      - t18
+
+  - name: Crear directorio temporal /varlog -t19
+    file:
+        path: /varlog
+        owner: root
+        group: root
+        state: directory
+    tags:
+      - t19
+
+  - name: Crear directorio temporal /varlogaudit -t20
+    file:
+        path: /varlogaudit
+        owner: root
+        group: root
+        state: directory
+    tags:
+      - t20
+
+  - name: Crear directorio temporal /vartmp -t21
+    file:
+        path: /vartmp
+        owner: root
+        group: root
+        state: directory
+    tags:
+      - t21
+
+  - name: Montaje temporal de /home -t22
+    mount:
+        path: /home1
+        src: /dev/vgroot/lvhome
+        fstype: xfs
+        opts: defaults
+        state: present
+    tags:
+      - t22
+
+  - name: Montaje temporal de /tmp -t23
+    mount:
+        path: /tmp1
+        src: /dev/vgroot/lvtmp
+        fstype: xfs
+        opts: defaults
+        state: present
+    tags:
+      - t23
+
+  - name: Montaje temporal de /usr1 -t24
+    mount:
+        path: /usr1
+        src: /dev/vgroot/lvusr
+        fstype: xfs
+        opts: defaults
+        state: present
+    tags:
+      - t24
+
+  - name: Montaje temporal de /varlog -t25
+    mount:
+        path: /varlog
+        src: /dev/vgroot/lvvarlog
+        fstype: xfs
+        opts: defaults
+        state: present
+    tags:
+      - t25
+
+  - name: Montaje temporal de /varlogaudit -t26
+    mount:
+        path: /varlogaudit
+        src: /dev/vgroot/lvvarlogaudit
+        fstype: xfs
+        opts: defaults
+        state: present
+    tags:
+      - t26
+
+  - name: Montaje temporal de /vartmp -t27
+    mount:
+        path: /vartmp
+        src: /dev/vgroot/lvvartmp
+        fstype: xfs
+        opts: defaults
+        state: present
+    tags:
+      - t27
+...

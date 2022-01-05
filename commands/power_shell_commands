@@ -1,0 +1,9 @@
+Get-WindowsFeature | Where-Object {$_.InstallState -eq 'Installed'}
+Get-WindowsFeature | where-object {$_.Installed -eq $True} | format-list DisplayName
+
+whoami
+
+Get-LocalUser
+Get-LocalGroup
+Get-LocalGroupMember
+

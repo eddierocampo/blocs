@@ -1,0 +1,24 @@
+# {{ ansible_managed }}
+## Numero de procesos para user oracle
+oracle soft nproc   4096
+oracle hard nproc   16384
+## Numero de ficheros para user oracle
+oracle soft nofile  10244
+oracle hard nofile  65536
+## Cantidad de Stack para user oracle
+oracle soft stack   10240
+oracle hard stack   32768
+## :Limites de utilizacion de memoria
+oracle soft memlock unlimited
+oracle hard memlock unlimited
+## Numero de procesos para user grid
+grid   soft nproc   2047
+grid   hard nproc  16384
+## Numero de ficheros para user grid
+grid   soft nofile  1024
+grid   hard nofile 65536
+## Cantidad de Stack para user grid
+grid   soft stack  10240
+grid   hard stack  32768
+
+ 

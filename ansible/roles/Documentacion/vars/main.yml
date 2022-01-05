@@ -1,0 +1,23 @@
+# vars file for Documentacion
+
+# Directorio donde se almacenan los archivos
+# Se deben modificar solo de ser necesario
+dirwrk: '/tmp/doc_{{ ansible_hostname }}'
+#dirwrk: '/home/provseti/doc_{{ ansible_hostname }}'
+dirout: '/etc/ansible/roles/Documentacion/outputs/Documentos_{{ servicio }}'
+dirhdv: '{{ dirwrk }}/HDV'
+dirzip: '/etc/ansible/roles/Documentacion/outputs/Documentos_{{ servicio }}_{{ ambiente }}'
+
+# Nombre de la persona que realiza la documentacion
+responsable: 'Eddier Ocampo'
+
+# Proyecto a documentar
+servicio: 'SIEBEL'
+ambiente: 'PRD'
+
+# Usuario y Grupo para generar la documentacion
+usrdoc: opc
+grpdoc: opc
+# Usuario y Grupo Carpetas Locales depsetiprd
+usrloc: root
+grploc: root

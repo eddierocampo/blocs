@@ -1,0 +1,13 @@
+## cadena de conexión a DB y puerto de servicio de elasticsearch
+/monitoreo/calypso-devopscenter-4.4.1-rel/tools/operations-dashboard/dashboardConfig.properties
+
+## inicio de servicio de devops [manual]
+/monitoreo/calypso-devopscenter-4.4.1-rel/startDevopscenterDeployment.sh
+/monitoreo/calypso-devopscenter-4.4.1-rel/startDevopscenterMonitoring.sh
+
+## configuración con cadena de conexión a DB
+/monitoreo/configworkbench/config.properties
+## iniciar servicio de Workbench 
+/monitoreo/configworkbench/startConfigWorkbenchServer.sh
+
+systemctl start elasticsearch

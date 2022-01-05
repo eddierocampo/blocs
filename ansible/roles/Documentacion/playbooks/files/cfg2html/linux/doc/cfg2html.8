@@ -1,0 +1,191 @@
+.\" Copyright (c) 2003-2018 by MIchael MEifert, Gratien D'haese and Ralph Roth
+.\"$Id: cfg2html.8,v 6.15 2018/01/04 22:26:55 ralph Exp $
+
+.TH cfg2html-linux 8 "13.03.2018" "gdh/mime/rar"
+
+cfg2html is a little utility to collect the necessary system configuration files and system set-up to an ASCII file and HTML file. Simple to use and very helpful in disaster recovery situations.
+
+.SH NAME
+cfg2html \- creates a nice HTML and plain ASCII documentation of your GNU/Linux
+systems. WARNING, use this script AT YOUR OWN RISK.
+
+.SH SYNOPSIS
+
+.B cfg2html
+.RB [ \-oxshcSflkenaHvh ]
+.IR option ...
+.br
+
+.SH DESCRIPTION
+
+The
+.B cfg2html
+collects the system configuration into a HTML and a text file. cfg2html is the “Swiss army knife” for the sysadmins. It was written to get the necessary information to plan an update, to perform basic trouble shooting or performance analysis.
+
+This include the collection of Cron and At, installed Hardware, installed Software, Filesystems, Dump- and Swap-configuration, LVM, Network Settings, Kernel, System enhancements and Applications, Subsystems.
+
+As a bonus
+.B cfg2html
+creates a nice HTML and plain ASCII documentation. If you like, write your
+description of the system into
+.B /etc/cfg2html/systeminfo
+
+example:
+.TP
+  Main database server using special software.
+.TP
+  Contact: Micky Mouse <admin@foo.bar>
+.TP
+  Location: Mars Moon
+.TP
+and so on.
+
+.TP
+.B /etc/cfg2html/files
+if this file exists, you can add your own files to collect - see example included.
+
+.SS Switches
+The following switches are available from the command line:
+.TP
+.B \-o
+set directory to write or use the environment
+variable OUTDIR="/path/to/dir" (directory must exist)
+.TP
+.B \-v
+output version information and exit
+.BR
+
+use the following options to disable collections:
+.TP
+.B \-s
+disable: System
+.TP
+.B \-c
+disable: Cron
+.TP
+.B \-S
+disable: Software
+.TP
+.B \-f
+disable: Filesystem
+.TP
+.B \-l
+disable: LVM
+.TP
+.B \-k
+disable: Kernel
+.TP
+.B \-e
+disable: Enhancements
+.TP
+.B \-n
+disable: Network
+.TP
+.B \-a
+disable: Applications
+.TP
+.B \-H
+disable: Hardware
+.TP
+.B \-x
+don't create background images
+
+.SH FILES
+
+.TP
+.B /usr/bin/cfg2html-linux
+The script.
+
+.TP
+.B /etc/cfg2html/systeminfo
+your system description
+
+.TP
+.B /etc/cfg2html/files
+collect your own files
+
+.TP
+.B <hostname>.html
+the documentation in html form
+
+.TP
+.B <hostname>.txt
+the documentation in ascii form
+
+.TP
+.B <hostname>.err
+error logfile
+
+.TP
+.B <hostname>.partitions.save
+Disk Partitions to restore from
+
+.TP
+.B <hostname>._xpinfo.csv
+(only on systems connected to HP Disk Arrays): the output of the xpinfo command
+
+.TP
+.B /usr/share/man/man8/cfg2html.8.gz
+The man page.
+
+.TP
+.B README
+Additional documentation and installation instructions.
+
+.TP
+.B changelog
+Revision history for
+.BR cfg2html-linux.
+
+.SH "SEE ALSO"
+
+.B README, License.txt
+and
+.B changelog
+files in the source directory.
+
+.SH NOTES
+Only
+.B root
+can run the
+.B cfg2html
+wrapper script. For security reasons it is better to store the HTML and ASCII
+files in a safe place where only root user have access or remove the files from
+your file system.
+
+.SH CONTACTING
+If you like the script, and you want to learn more about the script, or want to
+see a feature added to it that isn't already here, then please subscribe to the
+project mailing list. The project web page is at
+.B http://www.cfg2html.com
+the mailing list is at
+.B http://groups.yahoo.com/cfg2html
+and the source code is hosted on
+.B https://github.com/cfg2html/cfg2html
+
+.SH WARNINGS
+use the
+.B cfg2html
+script at your own risk! See the file License.txt for details!
+.SH DIAGNOSTICS
+
+.B cfg2html
+writes errors to <hostname>.err
+
+.SH BUGS
+There are probably a lot of bugs.  We are currently using this script
+successfully for our own systems, but there are lot of features included
+that we don't have any way to test right now. If you find a bug or have a
+comment or suggestion about the script, please submit an issue at
+.I https://github.com/cfg2html/cfg2html/issues
+also you can email bugs and issue to the authors. You can find the address in the
+.I AUTHORS
+section. We love to hear from you. :-)
+
+.SH AUTHORS
+Original cfg2html HP-UX version written by Ralph Roth <cfg2html@hotmail.com>
+and ported to Linux by Michael Meifert, maintained by Gratien D'haese and
+Ralph Roth on github.com.
+
+
+See the source code and changelog for complete history and credits.

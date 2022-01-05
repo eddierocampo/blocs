@@ -1,0 +1,618 @@
+---
+# tasks file for seti.ora_12c_7
+#################################
+## Oracle 12c Release 2 Standalone/rac Server on Red Hat Enterprise Linux 7.X
+## 1. Hardware Details
+## CPU 16 Core
+## RAM 48 G
+## 2 NIC/Gigabit
+## 2 HBA 8Gbit
+
+## 2. Disk Details
+### FS SO.
+## /         15 GB
+## /dev/shm  24 GB
+## /boot    512 MB
+## /tmp       8 GB
+## /usr       5 GB
+## /var       8 GB
+## /home      8 GB
+### SWAP
+##       RAM                  Swap Space
+## 2 GB up to 16 GB    Equal to the size of RAM
+## Greater than 16 GB       16 GB of SWAP
+### BINARIOS ORACLE
+## /u01      50 GB
+## Oracle Database Volume 1 (db1)  100 GB
+## Oracle Database Volume 2 (db2)  100 GB
+## Oracle Redo Log Volume  (redo)   10 GB
+## Fast Recovery Area       (fra)  200 GB
+
+## 3. Firewall
+## Port      Protocol     Description
+## 22         TCP      Secure Shell (SSH)
+## 443        TCP      Hypertext Transfer Protocol over SSL/TLS (HTTPS)
+## 1528       TCP      Oracle Transparent Network Substrate (TNS) Listener default
+## 5500       TCP      EM Express 12c default port
+
+############################################################################
+##################### Actualizacion SO a RHEL ##############################
+#- name: Valida version actual del SO >= 8.3
+#
+#- name: Crea /etc/yum/vars/releaserver con version {{ OSVER_UP }}
+#  copy:
+#    content: '{{ OSVER_UP }}'
+#    dest: '/etc/yum/vars/releaserver'
+#  tags:
+#    - update
+### Actualizacion del sistema operativo 
+#- name: Actualizacion de RHEL a la version {{ OSVER_UP }}
+#  yum:
+#    name: '*'
+#    state: 'latest'
+#  tags:
+#    - update
+##################### Configuracion basica de SO ###############################
+- name: Configuracion de HOSTNAME
+  hostname:
+    name: "{{ OSNAME }}.{{ DOMAIN }}"
+  when: OSNAME is defined
+  tags:
+    - base
+### Configuracion de DNS
+- name: Configuarando servidor de nombre de Dominio
+  template:
+    src: etc/resolv.conf.j2
+    dest: /etc/resolv.conf
+    mode: 0644
+    owner: root
+    group: root
+    backup: yes
+  when: ansible_os_family == 'RedHat' and enable_dns == True
+  tags:
+    - base
+### Configurando fichero host
+- name: Connfigurando fichero hosts
+  lineinfile:
+    path: /etc/hosts
+    line: "{{ item.ip }}   {{ item.name }}   {{ item.name }}.{{ DOMAIN }}"
+    state: present
+  with_items:
+    - "{{ FILE_HOSTS }}"
+  #when: enable_rac == True
+  tags:
+    - base
+
+################################### Repositorio #################################
+- name: Setting YUM Repo
+  yum_repository:
+    name: "{{ REPO_RHEL.name }}"
+    description: "{{ REPO_RHEL.description }}"
+    baseurl: "{{ REPO_RHEL.baseurl }}"
+    state: "{{ REPO_RHEL.state }}"
+    enabled: "{{ REPO_RHEL.enabled }}"
+    gpgcheck: "{{ REPO_RHEL.gpgcheck }}"
+    sslverify: "{{ REPO_RHEL.sslverify }}"
+  when: ansible_os_family == 'RedHat' and enable_repo == True
+  tags:
+    - repositorio
+
+########################### Configuracion de NTP  #############################
+### Instalacion de paquetes necesarios
+- name: NTP Package Requirements
+  yum:
+    name: ntp
+    state: present
+    update_cache: yes
+  when: enable_ntp == True
+  tags:
+    - ntp
+### Ajustando el fichero de configuracion de NTP
+- name: NTP Configuration
+  template:
+    src: etc/ntp.conf.j2
+    dest: /etc/ntp.conf
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
+  when: enable_ntp == True
+  tags:
+    - ntp
+### Ajustando el Demonio de NTP
+- name: NTP Daemon Configuration
+  lineinfile:
+    path: /etc/sysconfig/ntpd
+    regexp: '^OPTIONS='
+    line: 'OPTIONS="-x -g"'
+    backup: yes
+  when: enable_ntp == True
+  tags:
+    - ntp
+### Iniciando y activando en el inicio el demonio NTP.
+- name: NTP Daemon Start/enabled
+  service:
+    name: ntpd
+    state: restarted
+    enabled: yes
+  when: enable_ntp == True
+  tags:
+    - ntp
+###################### Paquetes de extra para oracle ###########################
+### Copiando paquetes extra
+- name: Copiando paquetes adicionales
+  copy:
+    src: "{{ item }}"
+    dest: /opt/
+    owner: root
+    group: root
+    mode: 0644
+  with_fileglob: compat-lib/*.rpm
+  tags:
+    - ntp
+### Crea lista de paquetes a instalar 
+- name: Listando paquetes extra a instalar
+  shell: ls -l /opt/*.rpm | grep -v total | awk '{print $9}'
+  register: RPM
+  ignore_errors: yes
+  tags:
+    - Package-extra
+### Instala lo paquetes listados anteriormente
+- name: Instalando paquetes extras
+  yum:
+    name: "{{ RPM.stdout_lines }}"
+    state: present
+    disable_gpg_check: yes
+  tags:
+    - Package-extra
+### Paqueteria prerequisito de ORACLE
+- name: Instalando paquetes base de Oracle 12c Package
+  ansible.builtin.yum:
+    name: '{{ item }}'
+    state: present
+  #  update_cache: yes
+  with_items:
+    - "{{ rpm_list_oracle.12c }}"
+  # ignore_errors: yes
+  tags:
+    - Package
+
+###########################  Ajustes de SELinux ################################
+- name: Configurando Security-­Enhanced Linux (SELinux)
+  selinux:
+    policy: "{{ SELINUX_CONF.TARGET }}"
+    state: "{{ SELINUX_CONF.STATE }}"
+  tags:
+    - SELinux
+
+######################## Configurando el Firewalld #############################
+- name: Iniciando/habilitando Demonio Firewalld
+  service:
+    name: firewalld
+    state: restarted
+    enabled: yes
+  when: enable_fwd == true
+  tags:
+    - Firewall
+### Activando las reglas necesarias
+- name: Configurando reglas TCP Firewalld
+  firewalld:
+    port: '{{ item }}'
+    permanent: true
+    state: enabled
+  notify: Firewalld reload
+  when: enable_fwd == true
+  with_items:
+    - "{{ firewall_port }}"
+  tags:
+    - Firewall
+### Inactivando reglas y demonio Firewalld
+- name: Parando/deshabilitando Demonio Firewalld
+  service:
+    name: firewalld
+    state: stopped
+    enabled: no
+  when: enable_fwd == false
+  tags:
+    - Firewall
+
+########################## Activando parametros de kernel ######################
+### Configurando Virtual Memory
+- name: Configurando Memoria Virtual
+  sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: present
+    sysctl_file: /etc/sysctl.conf
+  with_dict: "{{ virtual_memory.12c }}"
+  tags:
+    - Kernel
+### Configurando Shared Memory (SHMMAX, SHMALL, SHMMNI)
+- name: Configurando Memoria compartida (SHMMAX, SHMALL, SHMMNI)
+  sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: present
+    sysctl_file: /etc/sysctl.conf
+  with_dict: "{{ shm_memory.12c }}"
+  tags:
+    - Kernel
+### Configurando Semaphores (SEMMSL, SEMMNI, SEMMNS)
+- name: Configurando Semaforos (SEMMSL, SEMMNI, SEMMNS)
+  sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: present
+    sysctl_file: /etc/sysctl.conf
+  with_dict: "{{ kernel_memory.12c }}"
+  tags:
+    - Kernel
+### Ephemeral Network Ports
+- name: Configurando puertos efimeros
+  sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: present
+    sysctl_file: /etc/sysctl.conf
+  with_dict: "{{ port_memory.12c }}"
+  tags:
+    - Kernel
+### Optimizing Network Settings
+- name: Optimizando parametros de red
+  sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: present
+    sysctl_file: /etc/sysctl.conf
+  with_dict: "{{ network_memory.12c }}"
+  tags:
+    - Kernel
+### Setting NOZEROCONF
+- name: Inactivando configuracion por defecto de red (NOZEROCONF)
+  lineinfile:
+    path: /etc/sysconfig/network
+    regexp: '^NOZEROCONF='
+    line: 'NOZEROCONF=yes'
+    state: present
+    backup: yes
+  tags:
+    - Kernel
+### Increasing synchronous I/O Requests
+- name: Incrementando las solicitudes de I/O sincronas
+  sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: present
+    sysctl_file: /etc/sysctl.conf
+  with_dict: "{{ io_memory.12c }}"
+  tags:
+    - Kernel
+### Increasing File Handles
+- name: Incrementando Ficheros Handles
+  sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: present
+    sysctl_file: /etc/sysctl.conf
+  with_dict: "{{ file_memory.12c }}"
+  tags:
+    - Kernel
+### Kernel Panic On OOPS Parameter
+- name: Ajustando parametro Kernel Panic On OOPS
+  sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: present
+    sysctl_file: /etc/sysctl.conf
+  with_dict: "{{ kernel_ops_panic.12c }}"
+  tags:
+    - Kernel
+### Disabling the avahi­-daemon service
+- name: Descativando servicio avahi-daemon
+  service:
+    name: "{{ item }}"
+    state: stopped
+    enabled: no
+  ignore_errors: yes
+  with_items:
+    - avahi-dnsconfd
+    - avahi-daemon
+  tags:
+    - Kernel
+
+#########################  Cuentas de usuario y grupos #########################
+- name: Creando grupos para oracle y grid
+  group:
+    name: "{{ item.key }}"
+    gid: "{{ item.value }}"
+    state: present
+  with_dict: " {{ ora_groups }}"
+  ignore_errors: yes
+  tags:
+    - user
+### Creando el usuario oracle
+- name: Creando cuenta de usuario oracle
+  user:
+    name: oracle
+    comment: "Oracle Database Admin"
+    uid: 54321
+    group: oinstall
+    groups:  dba,oper,asmdba,asmoper,backupdba,dgdba,kmdba
+    password: "{{ pass_oracle }}"
+  ignore_errors: yes
+  tags:
+    - user
+### Creando el usuario grid
+- name: Creando cuenta de usuario grid
+  user:
+    name: grid
+    comment: "Grid Infraestructure Admin"
+    uid: 54322
+    group: oinstall
+    groups:  dba,asmadmin,asmdba,asmoper
+    password: " {{ pass_grid }}"
+  ignore_errors: yes
+  tags:
+    - user
+### Crea llaves ssh para los usuarios oracle y grid
+- name: Creando llaves publicas ssh para los usuarios oracle y grid
+  authorized_key:
+    user: "{{ item }}"
+    state: present
+    key: "{{ lookup('file', 'ssh/id_rsa.pub') }}"
+    path: "/home/{{ item }}/.ssh/authorized_keys"
+    manage_dir: yes
+  with_items:
+    - "{{ ora_user }}"
+    - "{{ grid_user }}"
+  tags:
+    - user
+### Copiando llaves privadas ssh
+- name: Copiando llave privada para usuarios oracle y grid
+  copy:
+    src: ssh/id_rsa
+    dest: /home/{{ item }}/.ssh/id_rsa
+    owner: "{{ item }}"
+    group: oinstall
+    mode: 0600
+  with_items:
+    - "{{ ora_user }}"
+    - "{{ grid_user }}"
+  tags:
+    - user
+### Setting Shell Limits for the Grid and Oracle User
+- name: Configurando Shell de Limites para los usuarios Grid y Oracle
+  template:
+    src: etc/security/limits.d/99-grid-oracle-limits.conf.j2
+    dest: /etc/security/limits.d/99-grid-oracle-limits.conf
+    mode: 0644
+    owner: root
+    group: root
+    backup: yes
+  tags:
+    - user
+### Configurando los limites en los perfiles de oracle y grid
+- name:  Configurando Shell de Limites para los usuarios Grid y Oracle en profile
+  template:
+    src: etc/profile.d/oracle-grid.sh.j2
+    dest: /etc/profile.d/oracle-grid.sh
+    mode: 0644
+    owner: root
+    group: root
+    backup: yes
+  tags:
+    - user
+
+############################# Configurando Discos ##############################
+### Creando VG para aplicacion
+- name: Creando Volume Groups para Oracle y grid
+  lvg:
+    vg: "{{ item.vg }}"
+    pvs: "{{ item.pvs }}"
+    state: present
+  with_items:
+    - "{{ LVM }}"
+  when: enable_vg == True
+  tags:
+    - disco
+### Creando lvm para aplicacion
+- name: Creando Volumenes logicos para Oracle y grid
+  lvol:
+    vg: "{{ item.vg }}"
+    lv: "{{ item.lv }}"
+    size: 100%FREE
+    state: present
+  with_items:
+    - "{{ LVM }}"
+  when: enable_vg == True
+  tags:
+    - disco
+### Creando sistema de ficheros para aplicacion
+- name: Creando Sistema de Ficheros en los Volumenes logicos
+  filesystem:
+    fstype: "{{ item.fstype }}"
+    dev: "/dev/{{ item.vg }}/{{ item.lv }}"
+  with_items:
+    - "{{ LVM }}"
+  when: enable_vg == True
+  tags:
+    - disco
+### Montando los volumenes y agregandolos en /etc/fstab
+- name: Montando los LVM de forma persistente
+  mount:
+    src: "/dev/{{ item.vg }}/{{ item.lv }}"
+    path: "{{ item.mount }}"
+    fstype: "{{ item.fstype }}"
+    opts: "{{ item.mount_opts }}"
+    dump: "{{ item.mount_dump }}"
+    passno: "{{ item.mount_passno }}"
+    state: mounted
+  with_items:
+    - "{{ LVM }}"
+  when: enable_vg == True
+  tags:
+    - disco
+### Montando ajustando permisos Solicitados
+- name: Ajustando autorizaciones sobre los puntos de montaje
+  file:
+    path: "{{ item.mount }}"
+    owner: "{{ item.mount_owner }}"
+    group: "{{ item.mount_group }}"
+    mode: "{{ item.mount_mode }}"
+  with_items:
+    - "{{ LVM }}"
+  when: enable_vg == True
+  tags:
+    - disco
+
+################################### Discos ASM ################################
+### Paraticionando discos para asm
+- name: Particionando discos para ASM en nodo {{ ansible_hostname }}
+  parted:
+    device: "/dev/{{ item.ALIAS }}"
+    part_type: primary
+    number: 1
+    state: present
+  with_items:
+    - "{{ MPATHS }}"
+  when: node_part == True
+  tags:
+    - asm
+### Configurando Discos ASM metodo ( udev rules )
+- name: Configurando Discos ASM metodo ( udev rules )
+  template:
+    src: etc/udev/rules.d/99-oracleasm-disks.rules.j2
+    dest: /etc/udev/rules.d/99-oracleasm-disks.rules
+    mode: 0644
+    owner: root
+    group: root
+    backup: yes
+  when: enable_udev == True and enable_asmlib == False
+  tags:
+    - asm
+    - udev
+### Aplicando reglas udev sobre discos ASM
+- name: Aplicando reglas udev sobre discos ASM
+  block:
+    ### Inyectando shell de validacion
+    - name: Inyectando shell de validacion
+      template:
+        src: scripts/out_dm_disk_asm.sh.j2
+        dest: /opt/out_dm_disk_asm.sh
+        owner: root
+        group: root
+        mode: 0744
+      when: enable_udev == True and enable_asmlib == False
+      tags:
+        - asm
+        - udev
+    ### Encontrando dm- de discos ASM
+    - name: Encontrando dm- de discos ASM
+      shell: "/opt/out_dm_disk_asm.sh"
+      register: DM
+      ignore_errors: yes
+      when: enable_udev == True and enable_asmlib == False
+      tags:
+        - asm
+        - udev
+    ### Aplicando reglas udev
+    - name: Aplicando reglas udev
+      shell: "udevadm test /sys/block/{{ item }}"
+      ignore_errors: yes
+      with_items:
+        - "{{ DM.stdout_lines }}"
+      when: enable_udev == True and enable_asmlib == False
+      tags:
+        - asm
+        - udev
+### Copiando rpms usados para asmlib en /tmp/asmlib
+- name: Configurando discos ASM metodo ( asmlib )
+  block:
+    - name: Copiando paquetes de asmlib para RHEL {{ OSVER }}
+      copy:
+        src: "files/asmlib_{{ OSVER }}"
+        dest: /tmp
+        owner: root
+        group: root
+        mode: 0644
+        directory_mode: 0755
+      when: enable_asmlib == True and enable_udev == False
+      tags:
+        - asm
+        - asmlib
+    ### Obteniendo lista de paquetes para asm
+    - name: Obteniendo lista de paquetes a instalar en RHEL {{ OSVER }}
+      shell: "ls /tmp/asmlib_{{ OSVER }}/*.rpm"
+      register: RPMS
+      ignore_errors: yes
+      when: enable_asmlib == True and enable_udev == False
+      tags:
+        - asm
+        - asmlib
+    ### Instalando los paquetes necesarios para asm.
+    - name: Instalando paquetes de asmlib para RHEL {{ OSVER }}
+      yum:
+        name: "{{ RPMS.stdout_lines }}"
+        state: present
+      when: enable_asmlib == True and enable_udev == False
+      tags:
+        - asm
+        - asmlib
+    ### Ajustando el fichero de configuracion de asmlib
+    - name: Configurando oracleasm
+      template:
+        src: etc/sysconfig/oracleasm.j2
+        dest: /etc/sysconfig/oracleasm
+        mode: 0644
+        owner: root
+        group: root
+        backup: yes
+      when: enable_asmlib == True and enable_udev == False
+      tags:
+        - asm
+        - asmlib
+    ### Reinicio del servidor para cargar modulos de kernel requeridos por ASMLIB
+    - name: Reinicio para cargar modulos de kernel para asmlib
+      reboot:
+        reboot_timeout: 3600
+      tags:
+        - asm
+        - asmlib
+    ### Iniciando el modulo de asm
+    - name: Iniciando modulo ASM
+      service:
+        name: oracleasm
+        state: restarted
+        enabled: yes
+      register: ASM_INT
+      ignore_errors: yes
+      when: enable_asmlib == True and enable_udev == False
+      tags:
+        - asm
+        - asmlib
+    ### Configurando discos ASM en nodo primario
+    - name: Configurando discos ASM en nodo primario
+      shell: "oracleasm createdisk {{ item.ASMALIAS }} /dev/{{ item.ALIAS}}1"
+      ignore_errors: yes
+      register: ASM_DISKS_CREATE
+      with_items:
+        - "{{ MPATHS }}"
+      failed_when:
+        - ASM_DISKS_CREATE.rc != 0
+        - ASM_DISKS_CREATE.rc != 1
+      when: enable_asmlib == True and enable_udev == False and node_part == True
+      tags:
+        - asm
+        - asmlib
+    ### Configurando discos ASM en nodo secundario
+    - name: Configurando discos ASM en nodo secundario
+      shell: "oracleasm scandisks"
+      ignore_errors: yes
+      register: ASM_DISKS_SCAN
+      with_items:
+        - "{{ MPATHS }}"
+      when: enable_asmlib == True and enable_udev == False and node_part == False
+      tags:
+        - asm
+        - asmlib
+...

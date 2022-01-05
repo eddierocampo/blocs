@@ -1,0 +1,11 @@
+---
+- name: Depuracion de archivos temporales
+  file:
+     path: '{{ item }}'
+     state: absent
+  delegate_to: localhost
+  run_once: true
+  loop:
+    - '{{ dirout }}'
+    - '{{ dirzip }}'
+...

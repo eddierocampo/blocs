@@ -1,0 +1,25 @@
+---
+- name: Ejecutar Script Generacion Diskmap -t2_1
+  shell: 'sh {{ dirwrk }}/gen_inventario_inicial_RedHat.sh'
+  check_mode: no
+  ignore_errors: yes
+  tags:
+    - inventario
+    - RedHat
+    - t2
+    - t2_1
+
+- name: Recuperar archivo de diskamp generado -t2_2
+  fetch:
+    src: '{{ dirwrk }}/Inventario_Inicial_{{ ansible_hostname }}'
+    dest: '{{ dirout }}/'
+    flat: yes
+    validate_checksum: no
+  check_mode: no
+  ignore_errors: yes
+  tags:
+    - inventario
+    - RedHat
+    - t2
+    - t2_2
+...

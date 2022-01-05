@@ -1,0 +1,23 @@
+X11UseLocalhost yes
+X11Forwarding yes
+X11DisplayOffset 10 (opcional)
+
+
+touch .Xauthority
+xauth generate :0 . trusted
+xauth add $10.82.0.66:0 . $(xxd -l 16 -p /dev/urandom)
+xauth list
+xauth list | grep unix:`echo $DISPLAY | awk -F: '{print $2}' | awk -F. '{print $1}'` | awk '{print "xauth add " $0}'
+xauth add {salida de xauth list}
+export DISPLAY=10.82.0.66:0.0
+echo $DISPLAY
+
+
+KERNEL=="sd?1", SUBSYSTEM=="block", PROGRAM=="/usr/lib/udev/scsi_id -g -u -d /dev/$parent", RESULT=="36012e0eb672941afb4efff84bb2849c0", SYMLINK+="asm-disk1", OWNER="oracle", GROUP="oinstall", MODE="0660"
+
+/sbin/udevadm control --reload-rules
+udevadm test /block/sdd/sdd1
+/sbin/partprobe /dev/sdd1
+vi /etc/udev/rules.d/99-oracle-asmdevices.rules
+/usr/lib/udev/scsi_id -g -u -d /dev/$parent
+/usr/lib/udev/scsi_id -g -u -d /dev/sdd

@@ -1,0 +1,202 @@
+---
+#- name: Definicion de interface publica -t1_1
+#  set_fact:
+#    interface: "{{ ansible_default_ipv4.interface }}"
+#  when: ansible_os_family == 'RedHat' and check_speed == 'true'
+#
+#- name: Valida velocidad interface de red -t1_1
+#  set_fact:
+#    inter: "{{ lookup('vars', 'ansible_' + interface) }}"
+#  when: ansible_os_family == 'RedHat' and check_speed == 'true'
+#
+#- name: Define Velocidad de interfaz -t1_1
+#  set_fact:
+#    inter: '{{ int_speed }}'
+#  when: ansible_os_family == 'RedHat' and check_speed == 'false'
+
+- name: Crear directorio de trabajo remoto -t1_1
+  file:
+    path: '{{ dirwrk }}'
+    state: directory
+    recurse: yes
+    owner: '{{ usrdoc }}'
+    group: '{{ grpdoc }}'
+  tags:
+    - inventario
+    - diskmap
+    - estado
+    - entrega
+    - hdv
+    - AIX
+    - RedHat
+    - t1
+    - t1_1
+
+- name: Crear directorio local para archivos generados -t1_2
+  file:
+    path: '{{ item }}'
+    state: directory
+    recurse: yes
+    owner: '{{ usrloc }}'
+    group: '{{ grploc }}'
+  delegate_to: localhost
+  run_once: true
+  loop:
+    - '{{ dirout }}'
+    - '{{ dirzip }}'
+    - '{{ dirzip }}/Diskmapping'
+    - '{{ dirzip }}/Entrega-Recepcion'
+    - '{{ dirzip }}/Backup'
+    - '{{ dirzip }}/Monitoreo'
+    - '{{ dirzip }}/Estado-Final-Configuracion'
+    - '{{ dirzip }}/HDV'
+  tags:
+    - inventario
+    - diskmap
+    - estado
+    - entrega
+    - hdv
+    - AIX
+    - RedHat
+    - t1
+    - t1_2
+
+- name: Copia formatos de backup -t1_3
+  copy: 
+    src: RIT.FO.01.Solicitud_Respaldo_de_Informacion.xls 
+    dest: '{{ dirzip }}/Backup/RIT.FO.01.Solicitud_Respaldo_de_Informacion_{{ item }}.xls'
+    owner: '{{ usrloc }}'
+    group: '{{ grploc }}'
+    mode: 0755
+  delegate_to: localhost
+  run_once: true
+  with_inventory_hostnames: 
+    - all
+  tags:
+    - t1
+    - t1_3
+    
+- name: Formato de monitoreo del servicio {{ servicio }} -t1_4
+  copy:
+    src: MON.FO.03.Solicitud_Monitoreo_de_Servicios_y_Componentes.xls
+    dest: '{{ dirzip }}/Monitoreo/MON.FO.03.Solicitud_Monitoreo_de_Servicios_y_Componentes_{{ servicio }}.xls'
+    owner: '{{ usrloc }}'
+    group: '{{ grploc }}'
+    mode: 0755
+  delegate_to: localhost
+  run_once: true
+  tags:
+    - t1
+    - t1_4
+    
+- name: Copia de scripts para recoleccion de informacion servidor RedHat -t1_5
+  template:
+    src: "{{ item.orig }}"
+    dest: "{{ dirwrk }}/{{ item.def }}"
+    owner: '{{ usrdoc }}'
+    group: '{{ grpdoc }}'
+    mode: 0755
+  when: ansible_os_family == 'RedHat'
+  loop: 
+    - { orig: 'gen_diskmap_RedHat.j2', def: 'gen_diskmap_RedHat.sh' }
+    - { orig: 'gen_entrega_recepcion_RedHat.j2', def: 'gen_entrega_recepcion_RedHat.sh' }
+    - { orig: 'gen_estado_final_RedHat.j2', def: 'gen_estado_final_RedHat.sh' }
+    - { orig: 'gen_inventario_inicial_RedHat.j2', def: 'gen_inventario_inicial_RedHat.sh' }
+    - { orig: 'usuarios_linux.j2', def: 'usuarios_linux.txt' }
+  tags:
+    - inventario
+    - diskmap
+    - estado
+    - entrega
+    - hdv
+    - RedHat
+    - t1
+    - t1_5
+ 
+- name: Copia de scripts para recoleccion de informacion servidor SuSe -t1_6
+  template:
+    src: "{{ item.orig }}"
+    dest: "{{ dirwrk }}/{{ item.def }}"
+    owner: '{{ usrdoc }}'
+    group: '{{ grpdoc }}'
+    mode: 0755
+  when: ansible_os_family == 'Suse'
+  loop:
+    - { orig: 'gen_diskmap_Suse.j2', def: 'gen_diskmap_Suse.sh' }
+    - { orig: 'gen_entrega_recepcion_Suse.j2', def: 'gen_entrega_recepcion_Suse.sh' }
+    - { orig: 'gen_estado_final_Suse.j2', def: 'gen_estado_final_Suse.sh' }
+    - { orig: 'gen_inventario_inicial_Suse.j2', def: 'gen_inventario_inicial_Suse.sh' }
+    - { orig: 'usuarios_linux.j2', def: 'usuarios_linux.txt' }
+  tags:
+    - inventario
+    - diskmap
+    - estado
+    - entrega
+    - hdv
+    - Suse
+    - t1
+    - t1_6
+
+
+- name: Copia de scripts para recoleccion de informacion servidor AIX -t1_7
+  template:
+    src: '{{ item.orig }}'
+    dest: '{{ dirwrk }}/{{ item.def }}'
+    owner: '{{ usrdoc }}'
+    group: '{{ grpdoc }}'
+    mode: 0755
+  when: ansible_os_family == 'AIX'
+  loop:
+    - { orig: 'gen_diskmap_AIX.j2', def: 'gen_diskmap_AIX.sh' }
+    - { orig: 'gen_entrega_recepcion_AIX.j2', def: 'gen_entrega_recepcion_AIX.sh' }
+    - { orig: 'gen_estado_final_AIX.j2', def: 'gen_estado_final_AIX.sh' }
+    - { orig: 'gen_inventario_inicial_AIX.j2', def: 'gen_inventario_inicial_AIX.sh' }
+    - { orig: 'usuarios_AIX.j2', def: 'usuarios_AIX.txt' }
+  tags:
+    - inventario
+    - diskmap
+    - estado
+    - entrega
+    - hdv
+    - AIX
+    - t1
+    - t1_7
+
+- name: Copia de scripts para recoleccion de informacion servidor Debian -t1_8
+  template:
+    src: '{{ item.orig }}'
+    dest: '{{ dirwrk }}/{{ item.def }}'
+    owner: '{{ usrdoc }}'
+    group: '{{ grpdoc }}'
+    mode: 0755
+  when: ansible_os_family == 'Debian'
+  loop:
+    - { orig: 'gen_diskmap_Debian.j2', def: 'gen_diskmap_Debian.sh' }
+    - { orig: 'gen_entrega_recepcion_Debian.j2', def: 'gen_entrega_recepcion_Debian.sh' }
+    - { orig: 'gen_estado_final_Debian.j2', def: 'gen_estado_final_Debian.sh' }
+    - { orig: 'gen_inventario_inicial_Debian.j2', def: 'gen_inventario_inicial_Debian.sh' }
+    - { orig: 'usuarios_Debian.j2', def: 'usuarios_Debian.txt' }
+  tags:
+    - inventario
+    - diskmap
+    - estado
+    - entrega
+    - hdv
+    - Debian
+    - t1
+    - t1_8
+
+- name: Genera script de consolidacion de archivos -t1_9
+  template:
+    src: 'consolida_archivos.j2'
+    dest: '{{ dirout }}/consolida_archivos.sh'
+    owner: '{{ usrloc }}'
+    group: '{{ grploc }}'
+    mode: 0755
+  delegate_to: localhost
+  run_once: true
+  tags:
+    - t1
+    - t1_9
+
+...

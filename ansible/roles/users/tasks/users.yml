@@ -1,0 +1,14 @@
+---
+- name: Crear los usuarios en el SO
+  user: 
+    name: "{{ item.usuarios }}"
+    password: {{ 'Zaq1xsw2' | password_hash('sha512') }}
+    uid: "{{ item.uid }}"
+    update_password: on_create
+    createhome: yes
+    group: sshaccess
+    comment: "{{ item.comentario }}"
+    shell: /bin/bash
+    user_state: present
+  loop:
+    - "{{ USERS }}"

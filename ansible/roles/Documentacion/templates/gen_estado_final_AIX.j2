@@ -1,0 +1,64 @@
+#!/bin/ksh
+
+###########################################################
+### Genereacion Documento De Estado Final Configuracion ###
+###########################################################
+
+#Creando Directorio Para Documentacion en /tmp
+mkdir -p {{ dirwrk }}
+touch {{ dirwrk }}/Estado_Config_{{ ansible_hostname }}
+alldsk=0
+
+### Calcula Unidades De Procesamiento Asignadas ###
+cpu=`lparstat |grep ent= |awk '{print $9}'|sed "s/ent=//g"`
+
+### Calcula Memoria en GB ###
+memm=`lparstat |grep mem= |awk '{print $7}'|sed "s/mem=//g" |sed "s/MB//g"`
+memg=`expr $memm / 1024`
+
+### Calcula Tamano Disco SO en GB ###
+dsksom=`lsvg rootvg |grep PERMISSION |awk '{print $7}' |sed "s/(//g"`
+dsksog=`expr $dsksom / 1024`
+
+### Calcula Espacio Discos APP ###
+### Calcula Tamaño Swap ###
+ds=`lsvg |grep swap`
+        if [ "$ds" = '' ];
+                then
+                diskswg='0'
+                else
+                disksw=`lsvg $ds |grep PERMISSION |awk '{print $7}' |sed "s/(//g"`
+                diskswg=`expr $disksw / 1024`
+        fi
+
+### Calcula Tamaño De Discos APP ###
+alldsk=0
+for i in `lsdev -Cc disk |grep hdisk |awk '{print $1}'`
+        do
+                dsk=`bootinfo -s $i`
+                alldsk=`expr $alldsk + $dsk`
+        done
+dskapg=`expr $alldsk / 1024`
+
+# Resta SO y Swap - Resutado GB
+dskpar=`echo $(expr $dskapg - $dsksog )`
+dskapp=`echo $(expr $dskpar - $diskswg )`
+
+### Version SO
+sover=`oslevel -s`
+
+### WWPN Tarjetas De Fibra
+rm -f {{ dirwrk }}/wwpn.txt
+rm -f {{ dirwrk }}/wwpn_new.txt
+
+for i in `lsdev |grep fcs |awk '{print $1}'`
+        do
+                wpn=`lscfg -vpl $i |grep Network |sed "s/\./ /g" |awk '{print $3}'`
+                echo $wpn >> {{ dirwrk }}/wwpn.txt 2>&1
+        done
+cat `find {{ dirwrk }}/wwpn.txt` | tr '\n' ' ' >> {{ dirwrk }}/wwpn_new.txt
+wwpn=`cat {{ dirwrk }}/wwpn_new.txt`
+
+### Generacion CSV
+#Generando Archivo CSV en la ruta {{ dirwrk }}"
+echo $cpu,$memg,$dsksog,$dskapp,$sover,{{ ansible_hostname }},{{ ansible_default_ipv4.address }},$wwpn > {{ dirwrk }}/Estado_Config_{{ ansible_hostname }}

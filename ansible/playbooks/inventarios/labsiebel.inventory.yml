@@ -1,0 +1,11 @@
+all:
+  children:
+    bastiones:
+      hosts:
+        labol8siebel:
+          ansible_host: 192.168.122.224
+  vars:
+    ansible_user: root
+    ansible_sudo_pass: Zaq1xsw2
+    ansible_become: yes
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'

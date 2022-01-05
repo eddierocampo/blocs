@@ -1,0 +1,21 @@
+---
+- name: Ejecutar Script Generacion Estado Final de configuracion
+  shell: 'sh {{ dirwrk }}/gen_estado_final_Debian.sh'
+  check_mode: no
+  ignore_errors: yes
+  tags:
+    - estado
+    - RedHat
+
+- name: Recuperar archivo de Estado Final de configuracion 
+  fetch:
+    src: '{{ dirwrk }}/Estado_Config_{{ ansible_hostname }}' 
+    dest: '{{ dirout }}/'
+    flat: yes
+    validate_checksum: no
+  check_mode: no
+  ignore_errors: yes
+  tags:
+    - recover
+    - RedHat
+...

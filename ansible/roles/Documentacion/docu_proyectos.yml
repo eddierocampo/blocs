@@ -1,0 +1,10 @@
+---
+- hosts: all
+  remote_user: '{{ usrdoc }}'
+  become: true
+  become_flags: '-H -S'
+  roles:
+    - /etc/ansible/roles/Documentacion
+  vars_files:
+    - /etc/ansible/roles/Documentacion/vars/main.yml
+...

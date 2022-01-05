@@ -1,0 +1,244 @@
+#!/bin/ksh
+
+####################################################
+### Generacion FMTO Entrega-Recepcion servidores ###
+####################################################
+
+### Service Pack S.O. ###
+versp=`oslevel -s`
+
+cat /dev/null > {{ dirwrk }}/iface.tx
+
+# Captura interfaces de red activas
+ifconfig -a |grep en |grep -v tcp |awk '{print $1}' |sed "s/://g" >> {{ dirwrk }}/iface.txt
+
+### Saca IP Privada del la maquina ###
+for i in `cat {{ dirwrk }}/iface.txt |grep -v {{ ansible_default_ipv4.device }} |grep -v lo0`
+        do
+                ipp=`lsattr -El $i |grep -iw netaddr |awk '{print $2}'`
+		if [ "$ipp" = '' ];
+        	then
+                	privip=`echo ''`
+        	else
+                	privip=$ipp
+        	fi
+        done
+
+### Saca IP Virtual de Oracle
+vipip=`cat /etc/hosts |grep vip |awk '{print $1}'`
+
+### Saca Nombre Scan e IPs
+scnam=`cat /etc/hosts |grep scan |awk '{print $2}' |uniq`
+scanip=`cat /etc/hosts |grep scan |awk '{print $1}' | tr '\n' ' '`
+
+### Saca Servidores NTP Configurados En El Server ###
+
+cat /dev/null > {{ dirwrk }}/ntpsrv_new.txt
+cat /dev/null > {{ dirwrk }}/ntpsrv.txt
+
+for i in `cat /etc/ntp.conf |grep server |awk '{print $2}'`
+        do
+                echo $i >> {{ dirwrk }}/ntpsrv.txt 2>&1
+        done
+
+if [ "{{ dirwrk }}/ntpsrv.txt" = '' ];
+        then
+                ntp=`echo ''`
+        else
+                cat `find {{ dirwrk }}/ntpsrv.txt` | tr '\n' ' ' >> {{ dirwrk }}/ntpsrv_new.txt
+                ntp=`cat {{ dirwrk }}/ntpsrv_new.txt`
+        fi
+
+### Saca DNS Configurados en el Server ###
+
+cat /dev/null > {{ dirwrk }}/dnssrv.txt
+cat /dev/null > {{ dirwrk }}/dnssrv_new.txt
+
+for i in `cat /etc/resolv.conf |grep nameserver |awk '{print $2}'`
+        do
+                echo $i >> {{ dirwrk }}/dnssrv.txt 2>&1
+        done
+
+if [ "{{ dirwrk }}/dnssrv.txt" = '' ];
+        then
+                dns=`echo ''`
+        else
+                cat `find {{ dirwrk }}/dnssrv.txt` | tr '\n' ' ' >> {{ dirwrk }}/dnssrv_new.txt
+                dns=`cat {{ dirwrk }}/dnssrv_new.txt`
+        fi
+
+### Saca dominio configurado en el servidor
+## valida existencia del resolv.conf
+
+dom=`cat /etc/resolv.conf |grep domain |awk '{rpint $2}' 2> /dev/null`
+if [ $dom = '' ];
+        then
+                domain=`echo 'NA'`
+        else
+                domain=$dom
+        fi
+
+### Consolidacion de Informacion en FMTO_Entrega ###
+echo '' > {{ dirwrk }}/FMTO_Entrega-Recepcion_servidores_{{ ansible_hostname }}
+echo '' > {{ dirwrk }}/FMTO_Entrega-Recepcion_servidores_{{ ansible_hostname }}
+echo '','','FORMATO DE ENTREGA/RECPECION DE SERVIDORES ATH' >> {{ dirwrk }}/FMTO_Entrega-Recepcion_servidores_{{ ansible_hostname }}
+echo '' > {{ dirwrk }}/FMTO_Entrega-Recepcion_servidores_{{ ansible_hostname }}
+echo '' > {{ dirwrk }}/FMTO_Entrega-Recepcion_servidores_{{ ansible_hostname }}
+echo 'PROYECTO:',{{ servicio }} >> {{ dirwrk }}/FMTO_Entrega-Recepcion_servidores_{{ ansible_hostname }}
+echo 'FECHA ENTREGA:',{{ ansible_date_time.date }} >> {{ dirwrk }}/FMTO_Entrega-Recepcion_servidores_{{ ansible_hostname }}
+echo 'ELABORADO POR:',{{ responsable }} >> {{ dirwrk }}/FMTO_Entrega-Recepcion_servidores_{{ ansible_hostname }}
+echo '' >> {{ dirwrk }}/FMTO_Entrega-Recepcion_servidores_{{ ansible_hostname }}
+echo '' >> {{ dirwrk }}/FMTO_Entrega-Recepcion_servidores_{{ ansible_hostname }}
+echo 'INFORMACION DEL SERVIDOR' >> {{ dirwrk }}/FMTO_Entrega-Recepcion_servidores_{{ ansible_hostname }}
+echo 'HOSTNAME','DOMAIN_NAME','SISTEMA OPERATIVO','VERSION S.O','PATCH S.O','IP-PUBLICA','IP-PRIVADA','IP-VRITUAL','SCAN_NAME','DIRECCIONES_SCAN','NTP SERVER','IP DNS SERVER','AMBIENTE' >> {{ dirwrk }}/FMTO_Entrega-Recepcion_servidores_{{ ansible_hostname }}
+echo {{ ansible_hostname }},$domain,{{ ansible_distribution }},{{ ansible_distribution_major_version }}.{{ ansible_distribution_release }},$versp,{{ ansible_default_ipv4.address }},$privip,$vipip,$scnam,$scanip,$ntp,$dns,{{ ambiente }} >> {{ dirwrk }}/FMTO_Entrega-Recepcion_servidores_{{ ansible_hostname }}
+echo '' >> {{ dirwrk }}/FMTO_Entrega-Recepcion_servidores_{{ ansible_hostname }}
+echo '' >> {{ dirwrk }}/FMTO_Entrega-Recepcion_servidores_{{ ansible_hostname }}
+echo 'HARDWARE' >>{{ dirwrk }}/FMTO_Entrega-Recepcion_servidores_{{ ansible_hostname }}
+echo 'HOSTNAME','COMPONENTE','DESCRIPCION','LIBRE' >>{{ dirwrk }}/FMTO_Entrega-Recepcion_servidores_{{ ansible_hostname }}
+echo {{ ansible_hostname }},'Memoria MB',{{ ansible_memtotal_mb }},'N/A' >>{{ dirwrk }}/FMTO_Entrega-Recepcion_servidores_{{ ansible_hostname }}
+echo '','CPU',{{ ansible_processor }},'N/A' >>{{ dirwrk }}/FMTO_Entrega-Recepcion_servidores_{{ ansible_hostname }}
+#echo '','Interface de red 1','en0','' >>{{ dirwrk }}/FMTO_Entrega-Recepcion_servidores_{{ ansible_hostname }}
+#echo '','Interface de red 2','en1','' >>{{ dirwrk }}/FMTO_Entrega-Recepcion_servidores_{{ ansible_hostname }}
+eth=0
+for i in `{{ ansible_interfaces }} |grep -v lo0`
+    do
+      iface=eth+1
+      echo '','Interface de red' $iface,$i,'N/A' >>{{ dirwrk }}/FMTO_Entrega-Recepcion_servidores_{{ ansible_hostname }}
+    done
+echo '','Swap MB',{{ ansible_swaptotal_mb }},'N/A' >>{{ dirwrk }}/FMTO_Entrega-Recepcion_servidores_{{ ansible_hostname }}
+echo '' >> {{ dirwrk }}/FMTO_Entrega-Recepcion_servidores_{{ ansible_hostname }}
+echo '' >> {{ dirwrk }}/FMTO_Entrega-Recepcion_servidores_{{ ansible_hostname }}
+
+### Saca Informacion De usuarios Del Sistema Diferentes a los creados por Default ###
+
+echo 'INFORMACION DE USUARIOS DE S.O' >> {{ dirwrk }}/FMTO_Entrega-Recepcion_servidores_{{ ansible_hostname }}
+echo 'ID','USERNAME','PASSWORD','PRIMARY GROUP','OTHER GROUPS','UMASK' >> {{ dirwrk }}/FMTO_Entrega-Recepcion_servidores_{{ ansible_hostname }}
+
+touch {{ dirwrk }}/usuarios2.txt
+touch {{ dirwrk }}/new_user.txt
+cat /dev/null > {{ dirwrk }}/usuarios2.txt
+cat /dev/null > {{ dirwrk }}/new_user.txt
+
+cut -d ':' -f 1 /etc/passwd | sort >> {{ dirwrk }}/usuarios2.txt
+diff {{ dirwrk }}/usuarios_AIX.txt {{ dirwrk }}/usuarios2.txt |grep ">" |sed -e 's/> //' >> {{ dirwrk }}/new_user.txt
+
+for i in `cat {{ dirwrk }}/new_user.txt`
+        do
+                id=`cat /etc/passwd |grep -iw $i | cut -d ':' -f 3`
+                username=`echo $i`
+                password="N/A"
+                prim_grp=`lsuser -c -a pgrp ALL | sed '/^#.*/d' | tr ':' '\011' |grep -iw $i |awk '{print $2}'`
+                other_grp=`lsuser -c -a groups ALL | sed '/^#.*/d' | tr ':' '\011' |grep -iw $i |awk '{print $2}' |sed "s/,/;/g"`
+                umask=`lsuser -c -a umask ALL | sed '/^#.*/d' | tr ':' '\011' |grep -iw $i |awk '{print $2}'`
+                echo $id,$username,$password,$prim_grp,$other_grp,$umask >> {{ dirwrk }}/FMTO_Entrega-Recepcion_servidores_{{ ansible_hostname }}
+        done
+echo '' >> {{ dirwrk }}/FMTO_Entrega-Recepcion_servidores_{{ ansible_hostname }}
+echo '' >> {{ dirwrk }}/FMTO_Entrega-Recepcion_servidores_{{ ansible_hostname }}
+
+### Saca Informacion de los filesystems Configurados en el servidor ###
+cat /dev/null > {{ dirwrk }}/lvs.txt
+
+### Guarda Lista De lvs Activos ###
+for i in `lsvg -o |sort`
+        do
+                lsvg -l $i |grep -v : |grep -v NAME |grep -v N/A >> {{ dirwrk }}/lvs.txt
+        done
+
+echo 'INFORMACION DE FILESYSTEMS' >> {{ dirwrk }}/FMTO_Entrega-Recepcion_servidores_{{ ansible_hostname }}
+echo 'DEVICE','FILESYSTEM TYPE','MOUNT POINT','SIZE GB','FREE GB','PERMISOS','OWNER:GROUP' >> {{ dirwrk }}/FMTO_Entrega-Recepcion_servidores_{{ ansible_hostname }}
+
+# Valida si existe un GPFS para reportar FS
+gpfs=`/usr/lpp/mmfs/bin/mmgetstate |grep active |awk '{print $3}' 2> /dev/null`
+
+for j in `cat {{ dirwrk }}/lvs.txt |awk '{print $1}'`
+        do
+                mp=`lslv $j |grep LABEL |awk '{print $5}'`
+                size=`df -g |grep -iw $mp |awk '{print $2}'`
+                freesp=`df -g |grep -iw $mp |awk '{print $3}'`
+		fstype=`lslv $j |grep TYPE |awk '{print $2}'`
+                perm=`ls -ld $mp | awk '{k=0;for(i=0;i<=8;i++)k+=((substr($1,i+2,1)~/[rwx]/)*2^(8-i));if(k)printf("%0o ",k);print}' |awk '{print $1}'`
+                owner=`ls -ld $mp |awk '{print $3,$4}' |sed 's/ /:/g'`
+                echo $j,$fstype,$mp,$size,$freesp,$perm,$owner >> {{ dirwrk }}/FMTO_Entrega-Recepcion_servidores_{{ ansible_hostname }}
+        done
+if [ "$gpfs" != "" ]
+        then
+                mmlsnsd -m |grep -v node |grep -v NSD |awk '{print $1" "$3}' | sed "s/dev//g" |sed "s/\///g" > {{ dirwrk }}/gpfs.txt
+                mmlsnsd |grep -v free |awk '{print $1}' |grep -v File |sed 's/-//g' > {{ dirwrk }}/gfs_dev.txt
+                for i in `cat {{ dirwrk }}/gpfs_dev.txt |awk '{print $1}'`
+                do
+                        mp=`df -g |grep -iw $i |awk '{print $7}'`
+                        ppn=`df -g |grep -iw $i |awk '{print $2}'`
+                        size=${ppn%.*}
+			freesp=`df -g |grep -iw $i |awk '{print $3}'`
+			perm=`ls -ld $mp | awk '{k=0;for(i=0;i<=8;i++)k+=((substr($1,i+2,1)~/[rwx]/)*2^(8-i));if(k)printf("%0o ",k);print}' |awk '{print $1}'`
+			owner=`ls -ld $mp |awk '{print $3,$4}' |sed 's/ /:/g'`
+                        echo $i,gpfs,$mp,$size,$freesp,$perm,$owner >> {{ dirwrk }}/FMTO_Entrega-Recepcion_servidores_{{ ansible_hostname }}
+                done
+fi
+echo '' >> {{ dirwrk }}/FMTO_Entrega-Recepcion_servidores_{{ ansible_hostname }}
+echo '' >> {{ dirwrk }}/FMTO_Entrega-Recepcion_servidores_{{ ansible_hostname }}
+
+### Toma De Informacion Discos GPFS
+if [ "$gpfs" != "" ]
+        then
+                mmlsnsd -m |grep -v node |grep -v NSD |awk '{print $3}' | sed "s/dev//g" |sed "s/\///g" > $dirwrk/gpfs.txt
+                echo 'GPFS DISKS INFORMATION' >> {{ dirwrk }}/FMTO_Entrega-Recepcion_servidores_{{ ansible_hostname }} 
+                echo 'DISK WWPN','HDISK','GPFS DEVICE','MAJOR','MINOR','SIZE MB','OWNER','GROUP','PERMISSIONS','USE' >> {{ dirwrk }}/FMTO_Entrega-Recepcion_servidores_{{ ansible_hostname }} 
+
+                for i in `cat $dirwrk/gpfs.txt`
+                        do
+                                wwn=`lscfg -vpl $i |grep Z0 |sed "s/\./ /g" |awk '{print $4}'`
+				wwng=`echo 'C'$wwn`
+                                dev=`echo $i`
+                                size=`bootinfo -s $i`
+                                major=`ls -l /dev/$i |sed "s/\/dev\// /g"|sed "s/,//g"|awk '{print $5}'`
+                                minor=`ls -l /dev/$i |sed "s/\/dev\// /g"|sed "s/,//g"|awk '{print $6}'`
+                                perm=`ls -ld /dev/$i | awk '{k=0;for(i=0;i<=8;i++)k+=((substr($1,i+2,1)~/[rwx]/)*2^(8-i));if(k)printf("%0o ",k);print}' |awk '{print $1}'`
+                                owner=`ls -ld /dev/$i |awk '{print $3}'`
+                                grp=`ls -ld /dev/$i |awk '{print $4}'`
+                                gpfsd=`mmlsnsd -m |grep -v node |grep -v NSD |grep -iw $i |awk '{print $1}'`
+                echo $wwng,$dev,$gpfsd,$major,$minor,$size,$owner,$grp,$perm,'GPFS' >> {{ dirwrk }}/FMTO_Entrega-Recepcion_servidores_{{ ansible_hostname }} 
+                done
+fi
+
+
+### Saca Informacion Discos ASM ###
+
+pmon=`ps -fea |grep pmon |grep -i asm |awk '{print $9}'`
+
+if [ "$pmon" != "" ]
+        then
+        touch {{ dirwrk }}/asm.txt
+        cat /dev/null > {{ dirwrk }}/asm.txt
+
+        ls -le /dev |grep grid |grep -v lv |grep -v vg |grep -v oracle |sed "s/,//g"|awk '{print $6 ":" $10}' >> {{ dirwrk }}/asm.txt
+
+        echo 'ASM DISKS INFORMATION' >> {{ dirwrk }}/FMTO_Entrega-Recepcion_servidores_{{ ansible_hostname }} 
+        echo 'DISK WWPN','DEVICE','LABEL/PATH','MAJOR','MINOR','SIZE MB','OWNER','GROUP','PERMISSIONS','USE' >> {{ dirwrk }}/FMTO_Entrega-Recepcion_servidores_{{ ansible_hostname }} 
+
+        for i in `lspv |grep none |awk '{print $1}'`
+                do
+                        wwna=`lscfg -vpl $i |grep Z0 |sed "s/\./ /g" |awk '{print $4}'`
+			wwnasm=`echo 'C'$wwna`
+                        dev=`echo $i`
+                        size=`bootinfo -s $i`
+                        major=`ls -l /dev/$i |sed "s/\/dev\// /g"|sed "s/,//g"|awk '{print $5}'`
+                        minor=`ls -l /dev/$i |sed "s/\/dev\// /g"|sed "s/,//g"|awk '{print $6}'`
+
+                        for j in `cat {{ dirwrk }}/asm.txt | cut -f1 -d:`
+                                do
+                                if [ "$minor" = "$j" ]
+                                        then
+                                        asm=`cat {{ dirwrk }}/asm.txt |grep -iw $j | cut -f2 -d:`
+                                fi
+                                done
+                        perm=`ls -ld /dev/$asm | awk '{k=0;for(i=0;i<=8;i++)k+=((substr($1,i+2,1)~/[rwx]/)*2^(8-i));if(k)printf("%0o ",k);print}' |awk '{print $1}'`
+                        owner=`ls -ld /dev/$asm |awk '{print $3}'`
+                        grp=`ls -ld /dev/$asm |awk '{print $4}'`
+                        if [ "$asm" != "" ]
+                                then
+                                        echo $wwnasm,$dev,$asm,$major,$minor,$size,$owner,$grp,$perm,'ASM' >> {{ dirwrk }}/FMTO_Entrega-Recepcion_servidores_{{ ansible_hostname }} 
+                        fi
+                done
+fi
