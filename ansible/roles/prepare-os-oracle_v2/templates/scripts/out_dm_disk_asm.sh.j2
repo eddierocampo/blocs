@@ -1,0 +1,4 @@
+#!/bin/sh
+{%for disk in MPATHS %}
+ls -l /dev/mapper/{{ disk.ALIAS }}p1 | egrep -o 'dm-.*'
+{% endfor %}

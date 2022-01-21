@@ -1,0 +1,203 @@
+---
+# defaults file for ORACLE 19c
+previous: true
+disc_fs: true
+disc_asm: true
+onpremises: false
+cloud: true
+enable_rac: false
+
+
+## Definicion de repositorio para paquetes y respectiva activacion
+enable_repo: false
+REPO_RHEL: {
+  name: "Repo_local_ath",
+  description: "Red Hat Enterprise Linux 7 Server (RPMs) ATH",
+  baseurl: "https://10.129.60.66/reporhn/rhel-7-server-rpms",
+  state: "present",
+  enabled: "yes",
+  gpgcheck: "no",
+  sslverify: "no"
+  }
+
+## Version de SO para actualizarlo
+OSVER: '{{ ansible_distribution_version }}'
+
+## OS HOSTNAME
+## La configuracion del hostname se hace definiendo la variable OSNAME en el inventario
+## NAMESERVERS DNS que se alojaran en el fichero /etc/resolv.conf
+## Definicion de fichero hosts (SCAN, VIP, PRIVATE, PUBLIC).
+## Configurar si esta definido enable_rac: True
+OSNAME: oranod01
+DOMAIN: example.com
+NAMESERVERS:
+  - 192.168.0.1
+FILE_HOSTS:
+  - { ip: '192.168.122.111', name: '{{ OSNAME }}' }
+
+### NTP CONFIG
+### Activar el uso del servicio ntp
+enable_ntp: False
+ntp_config_server: [ 'saturno.unad.edu.co', '0.cl.ntp.edgeuno.com' ]
+ntp_config_restrict:
+  - '-4 default kod notrap nomodify nopeer noquery'
+  - '-6 default kod notrap nomodify nopeer noquery'
+  - '127.0.0.1'
+  - '::1'
+### Listado de paquetes prerequisitos
+rpm_list_oracle:
+#  - '@core'
+#  - '@base'
+  - bc
+  - binutils
+  - elfutils-libelf
+  - elfutils-libelf-devel
+  - fontconfig-devel
+  - glibc
+  - glibc-devel
+  - ksh
+  - libaio
+  - libaio-devel
+  - libXrender
+  - libX11
+  - libXau
+  - libXi
+  - libXtst
+  - libgcc
+  - libnsl
+  - librdmacm
+  - libstdc++
+  - libstdc++-devel
+  - libxcb
+  - libibverbs
+  - make
+  - smartmontools
+  - sysstat
+  - net-tools
+  - python3
+  - python3-configshell
+  - python3-rtslib
+  - python3-six
+  - targetcli
+  - nfs-utils
+  - gcc-c++
+  - glibc-devel.i686
+  - glibc.i686
+  - libstdc++.i686
+  - motif
+  - motif-devel
+  - redhat-lsb
+  - redhat-lsb-core 
+### Paquetes X11
+  - xorg-x11-xauth.x86_64 
+  - xorg-x11-server-utils.x86_64 
+  - xorg-x11-utils.x86_64
+### Java
+  - java-1.8.0-openjdk
+
+### Configuring Security­Enhanced Linux (SELinux)
+SELINUX_CONF: {
+  TARGET: "targeted",
+  STATE: "permissive"
+  }
+
+### Configuring Firewall Settings
+enable_fwd: true
+firewall_port: [ '22/tcp', '443/tcp', '1528/tcp', '5500/tcp' ]
+
+###  Setting Virtual Memory
+virtual_memory: {
+  vm.swappiness: 1,
+  vm.dirty_background_ratio: 3,
+  vm.dirty_ratio: 80,
+  vm.dirty_expire_centisecs: 500,
+  vm.dirty_writeback_centisecs: 100
+  }
+### Setting Shared Memory (SHMMAX, SHMALL, SHMMNI)
+shm_memory: {
+  kernel.shmmax: 8329226240,
+  kernel.shmall: 8329226240,
+  kernel.shmmni: 4096
+  }
+###   Setting Semaphores (SEMMSL, SEMMNI, SEMMNS)
+kernel_memory: {
+    kernel.sem: '250 32000 100 128'
+}
+### Ephemeral Network Ports
+port_memory: {
+  net.ipv4.ip_local_port_range:  '9000 65500'
+}
+### Optimizing Network Settings
+network_memory: {
+  net.core.rmem_default: 262144,
+  net.core.rmem_max: 4194304,
+  net.core.wmem_default: 262144,
+  net.core.wmem_max: 1048576
+}
+### Increasing synchronous I/O Requests
+io_memory: {
+  fs.aio-max-nr: 1048576
+}
+### Increasing File Handles
+file_memory: {
+  fs.file-max: 6815744
+}
+
+kernel_ops_panic: {
+  kernel.panic_on_oops: 1
+}
+
+### User Accounts & Groups
+ora_groups: {
+  oinstall:  54321,
+  dba: 54322,
+  asmdba:  54323,
+  asmoper: 54324,
+  asmadmin:  54325,
+  oper: 54326,
+  backupdba: 54327,
+  dgdba: 54328,
+  kmdba: 54329,
+  racdba: 54330
+}
+
+pass_grid: '$6$JO4wnKpvhaHyVW$nzyKRD0rx0XJRyJp4uMhDqIAVw36I1lsVdXvixxuZxBv/2pSDsW9j4EvPSCgLVWgQIl7mvXjtVaBTs9UQTC.i.'  # pass=grid
+pass_oracle: '$6$0Jv67Te5ZD$xmnj3Tc7wXCBbtMYCud46IP0g4xbVn9qUsWtArKPNlA.xyG1cwG452RQzxEEEvOcxvu18pPlFG3e.HDCU8h82.'    # pass=oracle
+
+### Setting up DM-­Multipath
+### solo uno de los dos debe estar en true al tiempo
+enable_udev: False
+enable_asmlib: True
+
+### Usuarios BD y GRID
+ora_user: 'oracle'
+grid_user: 'grid'
+
+### Configuracion Filesystems BD y GRID
+enable_vg: True
+ora_disk: 'vdc'
+grid_disk: 'vdd'
+exp_disk: 'vde'
+
+LVM:
+  - { pvs: '/dev/{{ ora_disk }}', vg: 'vg_ora', lv: 'lv_ora', mount: '/oracle', mount_owner: '{{ ora_user }}', mount_group: 'oinstall', mount_mode: '0755', mount_dump: 1, mount_passno: 2, mount_opts: 'defaults', fstype: 'xfs' }
+  - { pvs: '/dev/{{ grid_disk }}', vg: 'vg_grid', lv: 'lv_grid', mount: '/grid', mount_owner: '{{ grid_user }}', mount_group: 'oinstall', mount_mode: '0755', mount_dump: 1, mount_passno: 2, mount_opts: 'defaults', fstype: 'xfs' }
+  - { pvs: '/dev/{{ exp_disk }}', vg: 'vg_exp', lv: 'lv_exp', mount: '/exports', mount_owner: '{{ ora_user }}', mount_group: 'oinstall', mount_mode: '0755', mount_dump: 1, mount_passno: 2, mount_opts: 'defaults', fstype: 'xfs' }
+
+### Discos ASMLIB
+node_part: True
+MPATHS:
+#  - { ALIAS: "ASMDAT01", ASMALIAS: 'ASM01', WWPN: '3600507680c800008d800000000000a1a' }
+#  - { ALIAS: "ASMFRA01", ASMALIAS: 'FRA01', WWPN: '3600507680c800008d800000000000a1c' }
+#  - { ALIAS: "ASMARC01", ASMALIAS: 'ARC01', WWPN: '3600507680c800008d800000000000a1e' }
+  - { ALIAS: "vdf", ASMALIAS: 'ASM01' }
+  - { ALIAS: "vdg", ASMALIAS: 'FRA01' }
+  - { ALIAS: "vdh", ASMALIAS: 'ARC01' }
+
+### Credenciales ASM
+UDEV_CRED:
+  - { USER: "grid", GROUP: "dba", MODE: "0660" }
+
+ASM_CRED: 
+  - { USER: "grid", GROUP: "dba", MODE: "0660" }
+...

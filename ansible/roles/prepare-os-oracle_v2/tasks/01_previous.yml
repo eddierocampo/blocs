@@ -1,0 +1,369 @@
+##################### Actualizacion SO a RHEL ##############################
+---
+- name: Crea /etc/yum/vars/releaserver con version {{ OSVER_UP }}
+  copy:
+    content: '{{ OSVER_UP }}'
+    dest: '/etc/yum/vars/releaserver'
+  when: onpremises == true
+  tags:
+    - update
+### Actualizacion del sistema operativo
+- name: Actualizacion de RHEL a la version {{ OSVER_UP }}
+  yum:
+    name: '*'
+    state: 'latest'
+  when: onpremises == true
+  tags:
+    - update
+##################### Configuracion basica de SO ###############################
+- name: Configuracion de HOSTNAME
+  hostname:
+    name: "{{ OSNAME }}.{{ DOMAIN }}"
+  when: onpremises == true
+  tags:
+    - base
+### Configuracion de DNS
+- name: Configuarando servidor de nombre de Dominio
+  template:
+    src: etc/resolv.conf.j2
+    dest: /etc/resolv.conf
+    mode: 0644
+    owner: root
+    group: root
+    backup: yes
+  when: onpremises == true
+  tags:
+    - base
+### Configurando fichero host
+- name: Connfigurando fichero hosts
+  lineinfile:
+    path: /etc/hosts
+    line: "{{ item.ip }}   {{ item.name }}   {{ item.name }}.{{ DOMAIN }}"
+    state: present
+  with_items:
+    - "{{ FILE_HOSTS }}"
+  when: onpremises == true
+  tags:
+    - base
+
+################################### Repositorio ################################
+- name: Setting YUM Repo
+  yum_repository:
+    name: "{{ REPO_RHEL.name }}"
+    description: "{{ REPO_RHEL.description }}"
+    baseurl: "{{ REPO_RHEL.baseurl }}"
+    state: "{{ REPO_RHEL.state }}"
+    enabled: "{{ REPO_RHEL.enabled }}"
+    gpgcheck: "{{ REPO_RHEL.gpgcheck }}"
+    sslverify: "{{ REPO_RHEL.sslverify }}"
+  when:
+    - ansible_os_family == 'RedHat' and enable_repo == True
+    - onpremises == true
+  tags:
+    - repositorio
+
+########################### Configuracion de NTP  #############################
+### Instalacion de paquetes necesarios
+- name: NTP Package Requirements
+  yum:
+    name: ntp
+    state: present
+    update_cache: yes
+  when: enable_ntp == true
+  tags:
+    - ntp
+### Ajustando el fichero de configuracion de NTP
+- name: NTP Configuration
+  template:
+    src: etc/ntp.conf.j2
+    dest: /etc/ntp.conf
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
+  when: enable_ntp == True
+  tags:
+    - ntp
+### Ajustando el Demonio de NTP
+- name: NTP Daemon Configuration
+  lineinfile:
+    path: /etc/sysconfig/ntpd
+    regexp: '^OPTIONS='
+    line: 'OPTIONS="-x -g"'
+    backup: yes
+  when: enable_ntp == True
+  tags:
+    - ntp
+### Iniciando y activando en el inicio el demonio NTP.
+- name: NTP Daemon Start/enabled
+  service:
+    name: ntpd
+    state: restarted
+    enabled: yes
+  when: enable_ntp == True
+  tags:
+    - ntp
+###################### Paquetes de extra para oracle ###########################
+### Copiando paquetes extra
+- name: Copiando paquetes adicionales
+  copy:
+    src: "{{ item }}"
+    dest: /opt/
+    owner: root
+    group: root
+    mode: 0644
+  with_fileglob: compat-lib/*.rpm
+  tags:
+    - ntp
+### Crea lista de paquetes a instalar
+- name: Listando paquetes extra a instalar
+  shell: ls -l /opt/*.rpm | grep -v total | awk '{print $9}'
+  register: RPM
+  ignore_errors: yes
+  tags:
+    - Package-extra
+### Instala lo paquetes listados anteriormente
+- name: Instalando paquetes extras
+  yum:
+    name: "{{ RPM.stdout_lines }}"
+    state: present
+  tags:
+    - Package-extra
+### Paqueteria prerequisito de ORACLE
+- name: Instalando paquetes base de Oracle 19c Package
+  ansible.builtin.yum:
+    name: '{{ item }}'
+    state: present
+  #  update_cache: yes
+  with_items:
+    - "{{ rpm_list_oracle }}"
+  # ignore_errors: yes
+  tags:
+    - Package
+
+###########################  Ajustes de SELinux ################################
+- name: Configurando Security-­Enhanced Linux (SELinux)
+  selinux:
+    policy: "{{ SELINUX_CONF.TARGET }}"
+    state: "{{ SELINUX_CONF.STATE }}"
+  tags:
+    - SELinux
+
+######################## Configurando el Firewalld #############################
+- name: Iniciando/habilitando Demonio Firewalld
+  service:
+    name: firewalld
+    state: restarted
+    enabled: yes
+  when: enable_fwd == true
+  tags:
+    - Firewall
+### Activando las reglas necesarias
+- name: Configurando reglas TCP Firewalld
+  firewalld:
+    port: '{{ item }}'
+    permanent: true
+    state: enabled
+  notify: Firewalld reload
+  when: enable_fwd == true
+  with_items:
+    - "{{ firewall_port }}"
+  tags:
+    - Firewall
+### Inactivando reglas y demonio Firewalld
+- name: Parando/deshabilitando Demonio Firewalld
+  service:
+    name: firewalld
+    state: stopped
+    enabled: no
+  when: enable_fwd == false
+  tags:
+    - Firewall
+
+########################## Activando parametros de kernel ######################
+### Configurando Virtual Memory
+- name: Configurando Memoria Virtual
+  sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: present
+    sysctl_file: /etc/sysctl.conf
+  with_dict: "{{ virtual_memory }}"
+  tags:
+    - Kernel
+### Configurando Shared Memory (SHMMAX, SHMALL, SHMMNI)
+- name: Configurando Memoria compartida (SHMMAX, SHMALL, SHMMNI)
+  sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: present
+    sysctl_file: /etc/sysctl.conf
+  with_dict: "{{ shm_memory }}"
+  tags:
+    - Kernel
+### Configurando Semaphores (SEMMSL, SEMMNI, SEMMNS)
+- name: Configurando Semaforos (SEMMSL, SEMMNI, SEMMNS)
+  sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: present
+    sysctl_file: /etc/sysctl.conf
+  with_dict: "{{ kernel_memory }}"
+  tags:
+    - Kernel
+### Ephemeral Network Ports
+- name: Configurando puertos efimeros
+  sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: present
+    sysctl_file: /etc/sysctl.conf
+  with_dict: "{{ port_memory }}"
+  tags:
+    - Kernel
+### Optimizing Network Settings
+- name: Optimizando parametros de red
+  sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: present
+    sysctl_file: /etc/sysctl.conf
+  with_dict: "{{ network_memory }}"
+  tags:
+    - Kernel
+### Setting NOZEROCONF
+- name: Inactivando configuracion por defecto de red (NOZEROCONF)
+  lineinfile:
+    path: /etc/sysconfig/network
+    regexp: '^NOZEROCONF='
+    line: 'NOZEROCONF=yes'
+    state: present
+    backup: yes
+  tags:
+    - Kernel
+### Increasing synchronous I/O Requests
+- name: Incrementando las solicitudes de I/O sincronas
+  sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: present
+    sysctl_file: /etc/sysctl.conf
+  with_dict: "{{ io_memory }}"
+  tags:
+    - Kernel
+### Increasing File Handles
+- name: Incrementando Ficheros Handles
+  sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: present
+    sysctl_file: /etc/sysctl.conf
+  with_dict: "{{ file_memory }}"
+  tags:
+    - Kernel
+### Kernel Panic On OOPS Parameter
+- name: Ajustando parametro Kernel Panic On OOPS
+  sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: present
+    sysctl_file: /etc/sysctl.conf
+  with_dict: "{{ kernel_ops_panic }}"
+  tags:
+    - Kernel
+### Disabling the avahi­-daemon service
+- name: Descativando servicio avahi-daemon
+  service:
+    name: "{{ item }}"
+    state: stopped
+    enabled: no
+  ignore_errors: yes
+  with_items:
+    - avahi-dnsconfd
+    - avahi-daemon
+  tags:
+    - Kernel
+
+#########################  Cuentas de usuario y grupos #########################
+- name: Creando grupos para oracle y grid
+  group:
+    name: "{{ item.key }}"
+    gid: "{{ item.value }}"
+    state: present
+  with_dict: " {{ ora_groups }}"
+  ignore_errors: yes
+  tags:
+    - user
+### Creando el usuario oracle
+- name: Creando cuenta de usuario oracle
+  user:
+    name: oracle
+    comment: "Oracle Database Admin"
+    uid: 54321
+    group: oinstall
+    groups:  dba,oper,asmdba,asmoper,backupdba,dgdba,kmdba
+    password: "{{ pass_oracle }}"
+  ignore_errors: yes
+  tags:
+    - user
+### Creando el usuario grid
+- name: Creando cuenta de usuario grid
+  user:
+    name: grid
+    comment: "Grid Infraestructure Admin"
+    uid: 54322
+    group: oinstall
+    groups:  dba,asmadmin,asmdba,asmoper
+    password: " {{ pass_grid }}"
+  ignore_errors: yes
+  tags:
+    - user
+### Crea llaves ssh para los usuarios oracle y grid
+- name: Creando llaves publicas ssh para los usuarios oracle y grid
+  authorized_key:
+    user: "{{ item }}"
+    state: present
+    key: "{{ lookup('file', 'ssh/id_rsa.pub') }}"
+    path: "/home/{{ item }}/.ssh/authorized_keys"
+    manage_dir: yes
+  with_items:
+    - oracle
+    - grid
+  tags:
+    - user
+### Copiando llaves privadas ssh
+- name: Copiando llave privada para usuarios oracle y grid
+  copy:
+    src: ssh/id_rsa
+    dest: /home/{{ item }}/.ssh/id_rsa
+    owner: "{{ item }}"
+    group: oinstall
+    mode: 0600
+  with_items:
+    - oracle
+    - grid
+  tags:
+    - user
+### Setting Shell Limits for the Grid and Oracle User
+- name: Configurando Shell de Limites para los usuarios Grid y Oracle
+  template:
+    src: etc/security/limits.d/99-grid-oracle-limits.conf.j2
+    dest: /etc/security/limits.d/99-grid-oracle-limits.conf
+    mode: 0644
+    owner: root
+    group: root
+    backup: yes
+  tags:
+    - user
+### Configurando los limites en los perfiles de oracle y grid
+- name:  Configurando Shell de Limites para los usuarios Grid y Oracle en profile
+  template:
+    src: etc/profile.d/oracle-grid.sh.j2
+    dest: /etc/profile.d/oracle-grid.sh
+    mode: 0644
+    owner: root
+    group: root
+    backup: yes
+  tags:
+    - user
+...

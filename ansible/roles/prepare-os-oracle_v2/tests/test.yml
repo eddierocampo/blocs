@@ -1,0 +1,6 @@
+---
+- hosts: all
+  become: yes
+  remote_user: vagrant
+  roles:
+    - /opt/ansible/roles/ansible_grid_standalone/prepare-os

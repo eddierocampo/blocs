@@ -1,0 +1,62 @@
+############################# Configurando Discos ##############################
+### Creando VG para aplicacion
+- name: Creando Volume Groups para Oracle y grid
+  lvg:
+    vg: "{{ item.vg }}"
+    pvs: "{{ item.pvs }}"
+    state: present
+  with_items:
+    - "{{ LVM }}"
+  when: enable_vg == True
+  tags:
+    - disco
+### Creando lvm para aplicacion
+- name: Creando Volumenes logicos para Oracle y grid
+  lvol:
+    vg: "{{ item.vg }}"
+    lv: "{{ item.lv }}"
+    size: 100%FREE
+    state: present
+  with_items:
+    - "{{ LVM }}"
+  when: enable_vg == True
+  tags:
+    - disco
+### Creando sistema de ficheros para aplicacion
+- name: Creando Sistema de Ficheros en los Volumenes logicos
+  filesystem:
+    fstype: "{{ item.fstype }}"
+    dev: "/dev/{{ item.vg }}/{{ item.lv }}"
+  with_items:
+    - "{{ LVM }}"
+  when: enable_vg == True
+  tags:
+    - disco
+### Montando los volumenes y agregandolos en /etc/fstab
+- name: Montando los LVM de forma persistente
+  mount:
+    src: "/dev/{{ item.vg }}/{{ item.lv }}"
+    path: "{{ item.mount }}"
+    fstype: "{{ item.fstype }}"
+    opts: "{{ item.mount_opts }}"
+    dump: "{{ item.mount_dump }}"
+    passno: "{{ item.mount_passno }}"
+    state: mounted
+  with_items:
+    - "{{ LVM }}"
+  when: enable_vg == True
+  tags:
+    - disco
+### Montando ajustando permisos Solicitados
+- name: Ajustando autorizaciones sobre los puntos de montaje
+  file:
+    path: "{{ item.mount }}"
+    owner: "{{ item.mount_owner }}"
+    group: "{{ item.mount_group }}"
+    mode: "{{ item.mount_mode }}"
+  with_items:
+    - "{{ LVM }}"
+  when: enable_vg == True
+  tags:
+    - disco
+...

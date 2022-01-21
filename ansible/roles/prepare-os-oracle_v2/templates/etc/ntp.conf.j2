@@ -1,0 +1,13 @@
+# {{ ansible_managed }}
+driftfile /var/lib/ntp/drift
+
+{% for restrict in ntp_config_restrict %}
+restrict {{ restrict }}
+{% endfor %}
+
+{% for server in ntp_config_server %}
+server {{ server }} iburst
+{% endfor %}
+
+includefile /etc/ntp/crypto/pw
+keys /etc/ntp/keys

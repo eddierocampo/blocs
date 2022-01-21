@@ -1,0 +1,161 @@
+################################### Discos ASM ################################
+### Paraticionando discos para asm
+- name: Particionando discos para ASM en nodo {{ ansible_hostname }}
+  parted:
+    device: "/dev/{{ item.ALIAS }}"
+    part_type: primary
+    number: 1
+    state: present
+  with_items:
+    - "{{ MPATHS }}"
+  when: node_part == True and racmaster == True
+  tags:
+    - asm
+### Configurando Discos ASM metodo ( udev rules )
+- name: Configurando Discos ASM metodo ( udev rules )
+  template:
+    src: etc/udev/rules.d/99-oracleasm-disks.rules.j2
+    dest: /etc/udev/rules.d/99-oracleasm-disks.rules
+    mode: 0644
+    owner: root
+    group: root
+    backup: yes
+  when: enable_udev == True and enable_asmlib == False
+  tags:
+    - asm
+    - udev
+### Aplicando reglas udev sobre discos ASM
+- name: Aplicando reglas udev sobre discos ASM
+  block:
+    ### Inyectando shell de validacion
+    - name: Inyectando shell de validacion
+      template:
+        src: scripts/out_dm_disk_asm.sh.j2
+        dest: /opt/out_dm_disk_asm.sh
+        owner: root
+        group: root
+        mode: 0744
+      when: enable_udev == True and enable_asmlib == False
+      tags:
+        - asm
+        - udev
+### Encontrando dm- de discos ASM
+- name: Encontrando dm- de discos ASM
+  shell: "/opt/out_dm_disk_asm.sh"
+  register: DM
+  ignore_errors: yes
+  when: enable_udev == True and enable_asmlib == False
+  tags:
+    - asm
+    - udev
+### Aplicando reglas udev
+- name: Aplicando reglas udev
+  shell: "udevadm test /sys/block/{{ item }}"
+  ignore_errors: yes
+  with_items:
+    - "{{ DM.stdout_lines }}"
+  when: enable_udev == True and enable_asmlib == False
+  tags:
+    - asm
+    - udev
+### Copiando rpms usados para asmlib en /tmp/asmlib
+- name: Configurando discos ASM metodo ( asmlib )
+block:
+  - name: Copiando paquetes de asmlib para RHEL {{ OSVER }}
+    copy:
+      src: "files/asmlib_{{ OSVER }}"
+      dest: /tmp
+      owner: root
+      group: root
+      mode: 0644
+      directory_mode: 0755
+    when: enable_asmlib == True and enable_udev == False
+    tags:
+      - asm
+      - asmlib
+  ### Obteniendo lista de paquetes para asm
+  - name: Obteniendo lista de paquetes a instalar en RHEL {{ OSVER }}
+    shell: "ls /tmp/asmlib_{{ OSVER }}/*.rpm"
+    register: RPMS
+    ignore_errors: yes
+    when: enable_asmlib == True and enable_udev == False
+    tags:
+      - asm
+      - asmlib
+  ### Instalando los paquetes necesarios para asm.
+  - name: Instalando paquetes de asmlib para RHEL {{ OSVER }}
+    yum:
+      name: "{{ RPMS.stdout_lines }}"
+      state: present
+    when: enable_asmlib == True and enable_udev == False
+    tags:
+      - asm
+      - asmlib
+  ### Ajustando el fichero de configuracion de asmlib
+  - name: Configurando oracleasm
+    template:
+      src: etc/sysconfig/oracleasm.j2
+      dest: /etc/sysconfig/oracleasm
+      mode: 0644
+      owner: root
+      group: root
+      backup: yes
+    when: enable_asmlib == True and enable_udev == False
+    tags:
+      - asm
+      - asmlib
+  ### Reinicio del servidor para cargar modulos de kernel requeridos por ASMLIB
+  - name: Reinicio para cargar modulos de kernel para asmlib
+    reboot:
+      reboot_timeout: 3600
+    tags:
+      - asm
+      - asmlib
+  ### Iniciando el modulo de asm
+  - name: Iniciando modulo ASM
+    service:
+      name: oracleasm
+      state: restarted
+      enabled: yes
+    register: ASM_INT
+    ignore_errors: yes
+    when: enable_asmlib == True and enable_udev == False
+    tags:
+      - asm
+      - asmlib
+  ### Configurando discos ASM en nodo primario
+  - name: Configurando discos ASM en nodo primario
+    shell: "oracleasm createdisk {{ item.ASMALIAS }} /dev/{{ item.ALIAS}}1"
+    ignore_errors: yes
+    register: ASM_DISKS_CREATE
+    with_items:
+      - "{{ MPATHS }}"
+    failed_when:
+      - ASM_DISKS_CREATE.rc != 0
+      - ASM_DISKS_CREATE.rc != 1
+    when: enable_asmlib == True and enable_udev == False and node_part == True and racmaster == True
+    tags:
+      - asm
+      - asmlib
+
+  ### Reconociendo discos ASM en nodo secundario
+  - name: Reconociendo discos ASM en nodo secundario
+    shell: "partprobe"
+    ignore_errors: yes
+    when: enable_asmlib == True and enable_udev == False and node_part == True and racmaster == False
+    tags:
+      - asm
+      - asmlib
+
+  ### Configurando discos ASM en nodo secundario
+  - name: Configurando discos ASM en nodo secundario
+    shell: "oracleasm scandisks"
+    ignore_errors: yes
+    register: ASM_DISKS_SCAN
+    with_items:
+      - "{{ MPATHS }}"
+    when: enable_asmlib == True and enable_udev == False and node_part == True and racmaster == False
+    tags:
+      - asm
+      - asmlib
+...

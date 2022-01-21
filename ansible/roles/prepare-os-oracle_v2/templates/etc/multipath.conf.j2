@@ -1,0 +1,14 @@
+### {{ ansible_managed }}
+defaults {
+    user_friendly_names yes
+#    find_multipaths ye
+}
+### Paths para asm
+multipaths {
+{% for disk in MPATHS %}
+            multipath {
+                     wwid   "{{ disk.WWPN }}"
+                     alias  "{{ disk.ALIAS }}"
+            }
+{% endfor %}
+}

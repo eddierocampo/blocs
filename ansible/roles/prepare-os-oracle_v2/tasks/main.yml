@@ -1,0 +1,20 @@
+---
+# task file menu
+- name: Check OS version and family
+  fail:
+    msg: "This role can only be run against OracleLinux 8. {{ ansible_distribution }} {{ ansible_distribution_major_version }} is not supported."
+  when:
+    - ansible_distribution != 'OracleLinux'
+    - ansible_distribution_major_version != '8'
+  tags:
+    - always
+
+- include: 01_previous.yml
+  when: previous
+
+- include: 02_disc_fs.yml
+  when: disc_fs
+
+- include: 03_disc_asm.yml
+  when: disc_asm
+
