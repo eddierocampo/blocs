@@ -1,0 +1,17 @@
+
+######## Install aks modules for Azure Cli
+
+az login # 1.login in azure
+az account set --subscription <subname> # 2.Chose one subscription
+az aks install-cli # 3. Install kubectl AKS
+## path bin
+/usr/local/bin/kubectl
+/usr/local/bin/kubelogin
+
+#########
+
+az login -u eddiocma@suramericana.com.co -p 'P#!xe.202202new*'
+az account subscription list
+
+az aks get-credentials --resource-group RGNAME --name CLUSTERNAME
+
