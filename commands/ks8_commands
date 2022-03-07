@@ -97,9 +97,11 @@ kubectl cordon [node_name]
 kubectl uncordon [node_name]
 ##Drain
 kubectl drain [node_name]
+kubectl drain [node_IP] --delete-local-data --ignore-daemonsets --force
 ##Nodes/Pods
 kubectl delete node [node_name]
 kubectl delete pod [pod_name]
+kubectl delete pod --force --grace-period=0
 kubectl edit node [node_name]
 kubectl edit pod [pod_name]
 ##Deployments/Namespaces
