@@ -1,0 +1,1 @@
+sudo dd iflag=direct if=/dev/oracleoci/oraclevd<paste device suffix here> of=/dev/null count=1

@@ -1,0 +1,20 @@
+En esta página están todos los certificados que tiene icp y como renovarlos;
+https://www.ibm.com/docs/en/cloud-private/3.2.0?topic=private-refreshing-certificates
+en este caso venció uno de kubernetes de nombre: kubelet-10.203.35.206.crt
+Pasos:
+
+1.1  Colocar en el servidor una fecha anterior a la del vencimiento del certificado para que pudiera subir el 911 y validar que el kubectl estuviera trabajando bien.
+1.2. ejecutar este comando, que lanza un playbook que renueva el certificado:
+  docker run --net=host -t -e LICENSE=accept -v "$(pwd)":/installer/cluster srkubewlsl01.suramericana.com.co:8500/ibmcom/icp-inception-amd64:3.2.1-ee replace-certificates --tags "kubernetes-certs"
+1.3. Se valida que todos hayan quedado renovados con esta shell:
+    cd /opt/ibm-cloud-private-3.2.1/cluster/cfc-certs/ \
+	find . -name "*.crt"|awk '{print " echo " $1 "; openssl x509 -enddate -noout -in "  $1 }'|bash
+
+
+2. Validar que los certificados internos no estuvieran vencidos. Ahi se renovó otro:
+2.1 Comando lista certificados -->	kubectl get certs --all-namespaces
+
+2.2 Se busca el certificado y se elimina y se utiliza el valor de la columna secret para borrarlo:
+	kubectl delete secret cert-manager-webhook-ibm-cert-manager-webhook-ca -n cert-manager
+
+2.3. La plataforma lo regenera y reinicia los pods que lo utilicen

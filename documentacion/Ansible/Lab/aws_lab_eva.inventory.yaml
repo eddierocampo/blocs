@@ -1,0 +1,27 @@
+all:
+  children:
+    ecsapigwevapdn:
+      hosts:
+        ecs-apigw-01:
+          ansible_host: 172.25.55.237
+        ecs-apigw-02:
+          ansible_host: 172.25.55.132
+        ecs-apigw-03:
+          ansible_host: 172.25.55.245
+    ecsapievapdn:
+      hosts:
+        ecs-api-01:
+          ansible_host: 172.25.55.201
+        ecs-api-02:
+          ansible_host: 172.25.55.181
+        ecs-api-03:
+          ansible_host: 172.25.55.231
+        ecs-api-04:
+          ansible_host: 172.25.55.156
+        ecs-api-05:
+          ansible_host: 172.25.55.153
+  vars:
+    ansible_user: ec2-user
+    ansible_ssh_private_key_file: /home/eocampo/keys/EVA-Motores-Produccion.pem
+    ansible_become: yes
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'

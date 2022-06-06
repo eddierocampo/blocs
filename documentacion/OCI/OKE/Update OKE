@@ -1,0 +1,27 @@
+Opcion con afectación de disponibilidad
+
+1. Update Master a la versión V.1.20.11
+2. Update Master a la versión V.1.21.5
+3. Update node pool a las V..1.20.11
+4. Update node pool la versión V.1.21.5
+5. Apagado de instancias WN y posterior terminación
+  5.1 Seleccionar eliminar los discos de boot
+6. Validar inicio de pods de servicio de K8S y de apps
+7. Modificar en los balanceadores de servicio, las IPs de los nuevos WN
+
+
+Opcion sin afectación de disponibilidad
+
+1. Update Master a la versión V.1.20.11
+2. Update Master a la versión V.1.21.5
+3. Update node pool a las V..1.20.11
+4. Update node pool la versión V.1.21.5
+5. Elegir WN a eliminar y mover los pods de aplicaciones a los WN disponibles
+
+Apagado de instancias WN y posterior terminación
+  5.1 Seleccionar eliminar los discos de boot
+6. Validar inicio de pods de servicio de K8S y de apps
+7. Modificar en los balanceadores de servicio, las IPs de los nuevos WN
+
+
+
