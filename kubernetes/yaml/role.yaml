@@ -1,0 +1,8 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: restart-deployment
+  namespace: pdn-seguros
+rules:
+  - apiGroups: [""]
+    resources: ["completador-dp","paquetizador-dp"]

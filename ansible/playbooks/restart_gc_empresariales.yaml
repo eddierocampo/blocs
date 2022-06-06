@@ -1,0 +1,29 @@
+---
+- name: Reiniciar GC Empresariales (IPC -CORE)
+  hosts: localhost
+
+  tasks:
+
+    - name: Reiniciar apigateway
+      shell: "kubectl rollout restar deploy "
+
+    - pause:
+        minutes: 3
+
+    - name: Reiniciar front
+      shell: "kubectl rollout restar deploy "
+
+    - pause:
+        minutes: 3
+
+    - name: Reiniciar back-gc
+      shell: "kubectl rollout restar deploy "
+
+    - pause:
+        minutes: 3
+
+    - name: Reiniciar ohs
+      shell: "kubectl rollout restar deploy "
+
+    - pause:
+        minutes: 3

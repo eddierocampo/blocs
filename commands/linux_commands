@@ -1,6 +1,11 @@
-####### AWK ######################
+####### AWK  & GREEP ############
 awk '{print $1}' /etc/passwd
 awk -F: '{print $1}' /etc/passwd
+
+grep "aaa\|bbb"
+grep -E "aaa|bbb"
+grep -E aaa\|bbb
+grep -i aaa -C3
 #################################
 
 ##### reemplazar en vi ##########
@@ -89,8 +94,9 @@ systemctl status rsyslog
 sudo cat /var/log/sudo.log
 #################################
 
-###### Prueba scan port nc ######
+###### Prueba scan port ######
 nc -zv -w 3 10.10.8.8 20-80
+curl -v url
 #################################
 
 ###### buscar ##################
@@ -155,4 +161,4 @@ sudo mv -v sysmon /usr/bin
 
 ################################
 
-
+sed 's/unix/linux/' geekfile.txt

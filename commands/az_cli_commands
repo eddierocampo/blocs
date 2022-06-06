@@ -15,3 +15,28 @@ az account subscription list
 
 az aks get-credentials --resource-group RGNAME --name CLUSTERNAME
 
+#########
+Listar DBpostgres
+
+az postgres server list -g <resource_group>
+
+az login --service-principal -u <appid> -p <pass_or_certified> --tenant <tennadid>
+
+
+######
+Login to enable WebApp
+
+https://app-autoagendamiento-pdn-001.scm.azurewebsites.net/webssh/host
+https://app-autoagendamiento-pdn-001.azurewebsites.net
+
+az account set --subscription f8040222-95ea-444e-aa7b-59510849a4fd
+
+az webapp create-remote-connection --subscription f8040222-95ea-444e-aa7b-59510849a4fd --resource-group rg-vacunacion-persistence-pdn-001 -n app-autoagendamiento-pdn-001 &
+az webapp config set --resource-group rg-vacunacion-persistence-pdn-001 -n app-autoagendamiento-pdn-001 --remote-debugging-enabled=false
+
+####################
+
+az login --service-principal -u 5ad4ad01-00b4-49c0-a6cc-23a218ca7b34 -p B1ph?VGn7@m2/K@XHA6s@/XVkI.1rXxB --tenant 3c0bd4fe-1111-4d13-8e0c-7c33b9eb7581
+az aks get-credentials --resource-group Exp_Viajes_Pdn_rg --name aks_Pdn_viajes
+
+az role assignment create --assignee 412464d8-6d37-451f-8349-8cf321738194 --scope /subscriptions/85c4b20b-719b-4c8b-98f7-e6f2faa3eef5/resourceGroups/Exp_Viajes_Pdn_rg/providers/Microsoft.ContainerService/managedClusters/aks_Pdn_viajes --role 'List cluster user credential action'

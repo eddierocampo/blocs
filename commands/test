@@ -1,0 +1,15 @@
+#!/bin/bash
+pod1=ms-gcempresariales-dp-746c94cd-f8ddl
+pod3=ms-gcempresariales-dp-746c94cd-hnz59
+pod3=ms-gcempresariales-dp-746c94cd-kqdmg
+pod4=ms-gcempresariales-dp-746c94cd-pmhl2
+pod5=ms-gcempresariales-dp-746c94cd-tvcfx
+pod6=ms-gcempresariales-dp-746c94cd-w4jrf
+ns=pdn-reactivas
+
+kubectl logs $pod1 -n $ns > /tmp/"$pod1"_09032022.log
+kubectl logs $pod2 -n $ns > /tmp/"$pod2"_09032022.log
+kubectl logs $pod3 -n $ns > /tmp/"$pod3"_09032022.log
+kubectl logs $pod4 -n $ns > /tmp/"$pod4"_09032022.log
+kubectl logs $pod5 -n $ns > /tmp/"$pod5"_09032022.log
+kubectl logs $pod6 -n $ns > /tmp/"$pod6"_09032022.log

@@ -1,0 +1,236 @@
+{
+  "apiVersion": "v1",
+  "kind": "Pod",
+  "metadata": {
+    "annotations": {
+      "date": "1633706896",
+      "kubernetes.io/psp": "ibm-anyuid-psp"
+    },
+    "creationTimestamp": "2021-10-08T22:39:49Z",
+    "generateName": "apigatewaycore-dp-64958f4c48-",
+    "labels": {
+      "deploymenttimestamp": "2021-10-08T1633732784",
+      "environment": "coredev",
+      "flavor": "medium",
+      "imagetag": "BETA",
+      "name": "apigatewaycore",
+      "pod-template-hash": "64958f4c48",
+      "type": "jvm"
+    },
+    "name": "apigatewaycore-dp-64958f4c48-fpcmv",
+    "namespace": "reactivas-core",
+    "ownerReferences": [
+      {
+        "apiVersion": "apps/v1",
+        "blockOwnerDeletion": true,
+        "controller": true,
+        "kind": "ReplicaSet",
+        "name": "apigatewaycore-dp-64958f4c48",
+        "uid": "a4fbd81f-2888-11ec-99ae-fa163e599014"
+      }
+    ],
+    "resourceVersion": "272181374",
+    "selfLink": "/api/v1/namespaces/reactivas-core/pods/apigatewaycore-dp-64958f4c48-fpcmv",
+    "uid": "a4fe3840-2888-11ec-99ae-fa163e599014"
+  },
+  "spec": {
+    "containers": [
+      {
+        "env": [
+          {
+            "name": "SURA_ENVIRONMENT",
+            "value": "dev"
+          },
+          {
+            "name": "SURA_CONTAINER_FLAVOR",
+            "value": "medium"
+          },
+          {
+            "name": "AMBIENTE",
+            "value": "dev"
+          },
+          {
+            "name": "SURA_JVM_HEAPSIZE",
+            "value": "256"
+          },
+          {
+            "name": "SURA_INFRA_PARAMS",
+            "value": "-XX:MaxMetaspaceSize=128m -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=9052 -Dcom.sun.management.jmxremote.rmi.port=9052 -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.local.only=false -Djava.rmi.server.hostname=127.0.0.1"
+          }
+        ],
+        "image": "srncsk8msd01.suramericana.com.co:8500/reactivas-core/apigatewaycore.jvm.coredev:BETA",
+        "imagePullPolicy": "Always",
+        "lifecycle": {
+          "preStop": {
+            "exec": {
+              "command": [
+                "/bin/sleep",
+                "20"
+              ]
+            }
+          }
+        },
+        "livenessProbe": {
+          "failureThreshold": 3,
+          "httpGet": {
+            "path": "/agt-polizas/test",
+            "port": 9595,
+            "scheme": "HTTP"
+          },
+          "initialDelaySeconds": 300,
+          "periodSeconds": 20,
+          "successThreshold": 1,
+          "timeoutSeconds": 1
+        },
+        "name": "apigatewaycore-jvm-coredev",
+        "ports": [
+          {
+            "containerPort": 9595,
+            "protocol": "TCP"
+          }
+        ],
+        "readinessProbe": {
+          "failureThreshold": 3,
+          "httpGet": {
+            "path": "/agt-polizas/test",
+            "port": 9595,
+            "scheme": "HTTP"
+          },
+          "initialDelaySeconds": 30,
+          "periodSeconds": 10,
+          "successThreshold": 1,
+          "timeoutSeconds": 1
+        },
+        "resources": {
+          "limits": {
+            "cpu": "800m",
+            "memory": "768Mi"
+          },
+          "requests": {
+            "cpu": "200m",
+            "memory": "768Mi"
+          }
+        },
+        "securityContext": {
+          "capabilities": {
+            "drop": [
+              "MKNOD"
+            ]
+          }
+        },
+        "terminationMessagePath": "/dev/termination-log",
+        "terminationMessagePolicy": "File",
+        "volumeMounts": [
+          {
+            "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+            "name": "default-token-q7z27",
+            "readOnly": true
+          }
+        ]
+      }
+    ],
+    "dnsPolicy": "ClusterFirst",
+    "enableServiceLinks": true,
+    "imagePullSecrets": [
+      {
+        "name": "sa-reactivas-core"
+      }
+    ],
+    "nodeName": "10.208.24.206",
+    "nodeSelector": {
+      "node-role.kubernetes.io/corereactivas": "true"
+    },
+    "priority": 0,
+    "restartPolicy": "Always",
+    "schedulerName": "default-scheduler",
+    "securityContext": {},
+    "serviceAccount": "default",
+    "serviceAccountName": "default",
+    "terminationGracePeriodSeconds": 30,
+    "tolerations": [
+      {
+        "effect": "NoSchedule",
+        "key": "node.kubernetes.io/memory-pressure",
+        "operator": "Exists"
+      },
+      {
+        "effect": "NoExecute",
+        "key": "node.kubernetes.io/not-ready",
+        "operator": "Exists",
+        "tolerationSeconds": 300
+      },
+      {
+        "effect": "NoExecute",
+        "key": "node.kubernetes.io/unreachable",
+        "operator": "Exists",
+        "tolerationSeconds": 300
+      }
+    ],
+    "volumes": [
+      {
+        "name": "default-token-q7z27",
+        "secret": {
+          "defaultMode": 420,
+          "secretName": "default-token-q7z27"
+        }
+      }
+    ]
+  },
+  "status": {
+    "conditions": [
+      {
+        "lastProbeTime": null,
+        "lastTransitionTime": "2021-10-08T22:39:49Z",
+        "status": "True",
+        "type": "Initialized"
+      },
+      {
+        "lastProbeTime": null,
+        "lastTransitionTime": "2022-04-13T12:00:23Z",
+        "status": "True",
+        "type": "Ready"
+      },
+      {
+        "lastProbeTime": null,
+        "lastTransitionTime": "2022-04-13T12:00:23Z",
+        "status": "True",
+        "type": "ContainersReady"
+      },
+      {
+        "lastProbeTime": null,
+        "lastTransitionTime": "2021-10-08T22:39:49Z",
+        "status": "True",
+        "type": "PodScheduled"
+      }
+    ],
+    "containerStatuses": [
+      {
+        "containerID": "docker://15f3865b42342bb95605ae24f3e9cb4c4385d3d6bf125e54bb79b413cb005b60",
+        "image": "srncsk8msd01.suramericana.com.co:8500/reactivas-core/apigatewaycore.jvm.coredev:BETA",
+        "imageID": "docker-pullable://srncsk8msd01.suramericana.com.co:8500/reactivas-core/apigatewaycore.jvm.coredev@sha256:23fb44ec4142bf3cc0aed96a91090eee5abe2d891ec5e3a8186dc1890d957b63",
+        "lastState": {
+          "terminated": {
+            "containerID": "docker://284ce619d89c9b7181851ad7aa03c3c4ed5a80d544326c9b92aaaaf96c4b00ea",
+            "exitCode": 255,
+            "finishedAt": "2022-04-13T00:00:09Z",
+            "reason": "Error",
+            "startedAt": "2022-02-05T02:37:25Z"
+          }
+        },
+        "name": "apigatewaycore-jvm-coredev",
+        "ready": true,
+        "restartCount": 2,
+        "state": {
+          "running": {
+            "startedAt": "2022-04-13T11:59:21Z"
+          }
+        }
+      }
+    ],
+    "hostIP": "10.208.24.206",
+    "phase": "Running",
+    "podIP": "10.1.78.248",
+    "qosClass": "Burstable",
+    "startTime": "2021-10-08T22:39:49Z"
+  }
+}

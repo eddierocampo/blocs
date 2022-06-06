@@ -1,0 +1,24 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: restart-paquetizador-dp
+  namespace: pdn-seguros
+spec:
+  concurrencyPolicy: Forbid
+  schedule: '30 7 * * *'
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 600
+      template:
+        spec:
+          serviceAccountName: paquetizador-dp
+          restartPolicy: Never
+          containers:
+            - name: kubectl
+              image: docker-registry.default.svc:5000/pdn-seguros/paquetizador.jvm.prod:PRERELEASE
+              command:
+                - 'kubectl'
+                - 'rollout'
+                - 'restart'
+                - 'deployment/paquetizador-dp'

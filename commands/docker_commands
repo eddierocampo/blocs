@@ -19,3 +19,5 @@ docker network inspect
 docker run -it --name xxx --network mi_red ubuntu
 docker network create --subnet=172.18.0.0/16 mi_red
 docker network connect mi_red mi_link
+
+docker run --net=host -t -e LICENSE=accept -v "$(pwd)":/installer/cluster sgkubedllo01.suramericana.com.co:8500/ibmcom/icp-inception-amd64:3.2.1-ee replace-certificates --tags "kubernetes-certs"

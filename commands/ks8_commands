@@ -17,6 +17,7 @@ kubectl get po -o yaml
 kubectl get pod [pod_name] -o yaml --export
 kubectl get pod [pod_name] -o yaml --export > nameoffile.yaml
 kubectl get pods --field-selector status.phase=Running
+kubectl cp <namespace>/<name_pod>:<pathfile_source> <pathfile_target>
 ##Namespaces
 kubectl get ns
 kubectl get ns -o yaml
@@ -32,6 +33,7 @@ kubectl describe svc
 kubectl get svc -o wide
 kubectl get svc -o yaml
 kubectl get svc --show-labels
+kubectl get svc -l <label>=<name_label>
 ##DaemonSets
 kubectl get ds
 kubectl get ds --all-namespaces
@@ -92,6 +94,8 @@ kubectl taint [node_name] [taint _name]
 ##Labels
 kubectl label [node_name] disktype=ssd
 kubuctl label [pod_name] env=prod
+kubectl label node [name_wn] node-role.kubernetes.io/<role name>-
+kubectl label --list nodes [name_wn]
 ##Cordon/Uncordon
 kubectl cordon [node_name]
 kubectl uncordon [node_name]
@@ -108,9 +112,12 @@ kubectl edit pod [pod_name]
 kubectl edit deploy [deploy_name]
 kubectl delete deploy [deploy_name]
 kubectl expose deploy [deploy_name] --port=80 --type=NodePort
-kubectl scale deploy [deploy_name] --replicas=5
+kubectl scale deploy [deploy_name] --replicas=5 -n [name_space]
 kubectl delete ns
 kubectl edit ns [ns_name]
+kubectl rollout restart deploy [deploy_name] [name_space]
+kubectl rollout history deploy [deploy_name] --revision=<#>
+kubectl rollout undo deploy [deploy_name] --to-revision=<#>
 ##Services
 kubectl edit svc [ svc_name]
 kubectl delete svc [ svc_name]
@@ -154,3 +161,46 @@ kubectl get --raw /apis/metrics.k8s.io/
 kubectl config
 kubectl cluster -info
 kubectl get componentstatuses
+
+
+######################
+kubectl auth can-i create deployments --namespace [namespace]
+kubectl auth can-i list pods \
+	--namespace [namespace] \
+	--as system:serviceaccount:[namespace]:[user]
+
+kubectl get pod -A | tr -s '[:blank:]' ','
+kubectl get pod <pod_name> -o=custom-columns='NAME:spec.containers[*].name,IMAGE:spec.containers[*].image'
+
+kubectl get pods -o json
+kubectl get pods -o=jsonpath='{@}'
+kubectl get pods -o=jsonpath='{.items[0]}'
+kubectl get pods -o=jsonpath='{.items[0].metadata.name}'
+kubectl get pod -o=custom-columns='IMAGE:{.spec.containers[*].image}'
+kubectl get pods -o=jsonpath="{.items[*]['metadata.name', 'status.capacity']}"
+kubectl get pods -o=jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.status.startTime}{"\n"}{end}'
+kubectl get pods -o json -A | jq -r '.items[] | .metadata.name + " \n Req. RAM: " + .spec.containers[].resources.requests.memory + " \n Lim. RAM: " + .spec.containers[].resources.limits.memory + " \n Req. CPU: " + .spec.containers[].resources.requests.cpu + " \n Lim. CPU: " + .spec.containers[].resources.limits.cpu + " \n Req. Eph. DISK: " + .spec.containers[].resources.requests["ephemeral-storage"] + " \n Lim. Eph. DISK: " + .spec.containers[].resources.limits["ephemeral-storage"] + "\n"'
+kubectl get pods -A -o=custom-columns='NAME:spec.containers[*].name,MEMREQ:spec.containers[*].resources.requests.memory,MEMLIM:spec.containers[*].resources.limits.memory,CPUREQ:spec.containers[*].resources.requests.cpu,CPULIM:spec.containers[*].resources.limits.cpu' | tr -s '[:blank:]' ','
+
+docker run --net=host -t -e LICENSE=accept -v "$(pwd)":/installer/cluster sgkubedllo01.suramericana.com.co:8500/ibmcom/icp-inception-amd64:3.2.1-ee replace-certificates --tags "kubernetes-certs"
+
+MEMREQ:spec.containers[*].resources.requests.memory
+kubectl get deploy apigatewaycore-dp -o=custom-columns='NAME:spec.containers[*].Env.Name[SURA_JVM_HEAPSIZE]'
+kubectl get deploy -o=jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.containers.env.resources.limits.cpu}{"\n"}'
+
+
+## Generar listado de memoria y cpu limite mas SURA_JVM_HEAPSIZE por pods
+kubectl get pod -o=custom-columns='NAME:metadata.labels.name,MEMLIM:spec.containers[*].resources.limits.memory,MEREQ:spec.containers[*].resources.requests.memory,SURA_JVM_HEAPSIZE:{.spec.containers[*].env[?(@.name=="SURA_JVM_HEAPSIZE")].value},CPULIM:spec.containers[*].resources.limits.cpu,CPUREQ:spec.containers[*].resources.requests.cpu'
+## Generar listado de WN
+kubectl get nodes -o=custom-columns='NAME:metadata.name,CPU:status.allocatable.cpu,MEMORY:status.allocatable.memory,PODS:status.allocatable.pods,OSIMAGE:status.nodeInfo.osImage,KUBELET-V:status.nodeInfo.kubeletVersion,CONTAINER:status.nodeInfo.containerRuntimeVersion,STORAGE:status.capacity.ephemeral-storage'
+
+
+
+
+kubectl get deploy -o=custom-columns='NAME_DEPLOY:metadata.labels.name,REPLICAS:status.replicas,EGV:metadata.annotations.azure-pipelines/pipeline'
+
+kubectl get pod -A --sort-by='{.status.containerStatuses[*].restartCount}' | awk '$5>5'
+kubectl get pod -A --sort-by='{.status.containerStatuses[*].ready[?(@.name==false)]}'
+
+
+
