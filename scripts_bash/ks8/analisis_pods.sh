@@ -1,7 +1,7 @@
 #!/bin/bash
 
-name_pods=reaseguro
-namespace=pdn-reactivas
+name_pods=$1
+namespace=$2
 
 name_deploy="$name_pods"-dp
 fecha=`date +"%Y%m%d"`

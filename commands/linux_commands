@@ -6,6 +6,7 @@ grep "aaa\|bbb"
 grep -E "aaa|bbb"
 grep -E aaa\|bbb
 grep -i aaa -C3
+greep -wv
 #################################
 
 ##### reemplazar en vi ##########
@@ -162,3 +163,5 @@ sudo mv -v sysmon /usr/bin
 ################################
 
 sed 's/unix/linux/' geekfile.txt
+
+-o StrictHostKeyChecking=no
